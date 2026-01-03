@@ -202,7 +202,7 @@ onUnmounted(() => {
       
       <div v-if="currentScreen === 'selection'" key="select" class="screen-box border-blue-500/30 shadow-blue-500/20">
         <h1 class="text-5xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 drop-shadow-lg">
-          STATUS CHECK
+          ELENOR.. ARE YOU
         </h1>
         <div class="flex gap-6 justify-center w-full">
           <button @click="selectStatus('Single')" class="btn-primary from-cyan-500 to-blue-600 ring-cyan-400">
