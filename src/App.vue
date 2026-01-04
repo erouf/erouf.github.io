@@ -371,7 +371,7 @@ function onResize() {
         <h2 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-transparent">
           One Last Thing...
         </h2>
-        <p class="text-gray-600 mb-8 font-medium">When should we celebrate you?</p>
+        <p class="text-gray-600 mb-8 font-medium">When should we celebrate your birthday?</p>
 
         <div class="space-y-4 mb-8">
           <div class="relative">
@@ -392,7 +392,7 @@ function onResize() {
           :disabled="isSending"
           class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-xl hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <span v-if="!isSending">Send Surprise ✨</span>
+          <span v-if="!isSending">Send</span>
           <span v-else>Sending...</span>
         </button>
 
