@@ -6,12 +6,12 @@ import gsap from 'gsap'
 import emailjs from '@emailjs/browser'
 
 // --- GAME STATE ---
-// Options: 'intro', 'question', 'demonstration', 'birthday', 'final'
 const screen = ref('intro') 
 const userGuess = ref('')
 const totalSquares = 12
 const breaksCount = ref(0)
 const feedback = ref('')
+const inputPlaceholder = ref('?') // Dynamic placeholder for error feedback
 
 // --- BIRTHDAY STATE ---
 const bdayDay = ref('')
@@ -23,7 +23,7 @@ const months = [
   "July", "August", "September", "October", "November", "December"
 ]
 
-// --- SLIDER STATE (iPhone Unlock) ---
+// --- SLIDER STATE ---
 const sliderTrack = ref(null)
 const sliderKnob = ref(null)
 const isDragging = ref(false)
@@ -48,7 +48,6 @@ onMounted(() => {
   animate()
   window.addEventListener('resize', onResize)
   
-  // Slider measurements
   if (sliderTrack.value && sliderKnob.value) {
     trackWidth.value = sliderTrack.value.clientWidth
     maxDrag.value = trackWidth.value - sliderKnob.value.clientWidth - 8
@@ -114,7 +113,6 @@ function unlock() {
   if (navigator.vibrate) navigator.vibrate(50);
   setTimeout(startGame, 300)
 }
-
 
 // --- THREE.JS SETUP ---
 function initThree() {
@@ -197,17 +195,31 @@ function startGame() {
   })
 }
 
+// --- UPDATED SUBMIT FUNCTION ---
 function submitAnswer() {
   if (!userGuess.value) return
-  screen.value = 'demonstration'
   
   const correct = totalSquares - 1
-  if (parseInt(userGuess.value) === correct) {
-    feedback.value = "Exactly right! Watch the logic..."
-  } else {
-    feedback.value = `Nice try! For 12 squares, you need ${correct} breaks.`
+  const userAnswer = parseInt(userGuess.value)
+
+  // IF ANSWER IS WRONG
+  if (userAnswer !== correct) {
+    // 1. Shake animation using GSAP
+    const card = document.getElementById('question-card')
+    gsap.to(card, { x: [-10, 10, -10, 10, 0], duration: 0.4, ease: "power1.inOut" })
+    
+    // 2. Clear input and show "Try again"
+    userGuess.value = ''
+    inputPlaceholder.value = "Nope!"
+    setTimeout(() => { inputPlaceholder.value = "?" }, 1500)
+    
+    // 3. Return immediately - Do NOT go to demonstration
+    return
   }
-  
+
+  // IF ANSWER IS CORRECT
+  screen.value = 'demonstration'
+  feedback.value = "Exactly right! Watch the logic..."
   setTimeout(runBreakingAnimation, 300)
 }
 
@@ -215,16 +227,13 @@ function runBreakingAnimation() {
   const tl = gsap.timeline({ 
     defaults: { ease: "back.out(1.7)", duration: 0.6 },
     onComplete: () => {
-      // AFTER ANIMATION: Go to Birthday Screen
       setTimeout(() => {
         screen.value = 'birthday'
-        // Hide chocolate (move camera away or fade out elements if desired)
-        // For now, we keep it in background but blurred by the UI
       }, 2000)
     }
   })
 
-  // STEP 1: BREAK ROWS
+  // BREAK ROWS
   tl.to({}, { onStart: () => breaksCount.value = 1 }, "+=0.5")
   const rows23 = squares.filter(s => s.userData.gridZ > 0)
   tl.to(rows23.map(s => s.position), { z: "+=0.45", y: "+=0.05", rotationX: "-=0.1" })
@@ -233,7 +242,7 @@ function runBreakingAnimation() {
   const row3 = squares.filter(s => s.userData.gridZ > 1)
   tl.to(row3.map(s => s.position), { z: "+=0.45", y: "+=0.05", rotationX: "-=0.1" })
 
-  // STEP 2: BREAK COLUMNS
+  // BREAK COLUMNS
   for (let col = 0; col < COLS - 1; col++) {
     for (let row = 0; row < ROWS; row++) {
       tl.to({}, { onStart: () => breaksCount.value++ }, ">-0.1") 
@@ -254,15 +263,12 @@ function runBreakingAnimation() {
   }, "+=0.5")
 }
 
-// --- SEND EMAIL FUNCTION ---
 function sendBirthday() {
   if (!bdayDay.value || !bdayMonth.value) {
     alert("Please enter both day and month!")
     return
   }
-
   isSending.value = true
-
   const templateParams = {
     to_name: "Developer",
     from_name: "Elenor",
@@ -271,15 +277,14 @@ function sendBirthday() {
   }
 
   // REPLACE THESE WITH YOUR ACTUAL EMAILJS KEYS
-  emailjs.send('service_rfemzas', 'template_j8w9l5c', templateParams, 'vYGev7OaoJPuOPmHh')
+    emailjs.send('service_rfemzas', 'template_j8w9l5c', templateParams, 'vYGev7OaoJPuOPmHh')
     .then((response) => {
-       console.log('SUCCESS!', response.status, response.text)
        isSending.value = false
        screen.value = 'final'
     }, (err) => {
        console.log('FAILED...', err)
        isSending.value = false
-       alert("Something went wrong sending the data. Check console.")
+       alert("Failed to send.")
     })
 }
 
@@ -331,15 +336,21 @@ function onResize() {
     </div>
 
     <div v-if="screen === 'question'" class="absolute bottom-12 w-full px-4 animate-fade-up flex justify-center">
-      <div class="bg-white/60 p-8 rounded-3xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.1)] backdrop-blur-xl text-center border border-white/40 max-w-md w-full">
+      <div id="question-card" class="bg-white/60 p-8 rounded-3xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.1)] backdrop-blur-xl text-center border border-white/40 max-w-md w-full">
         <h2 class="text-2xl font-extrabold mb-4 text-gray-800">Chocolate Logic</h2>
         <p class="mb-8 text-lg font-medium text-gray-700 leading-relaxed">
-          You have a <span class="font-bold text-purple-700">{{ROWS}}x{{COLS}} chocolate bar</span> ({{totalSquares}} squares).
+          You have a <span class="font-bold text-purple-700">{{ROWS}}x{{COLS}} bar</span> ({{totalSquares}} squares).
           <br><br>
           What is the <span class="border-b-2 border-pink-400">minimum number of breaks</span> required to separate every single square?
         </p>
         <div class="flex gap-3 justify-center">
-          <input v-model="userGuess" type="number" placeholder="?" class="w-24 text-center text-3xl font-bold border-2 border-purple-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white/80 text-purple-900" @keyup.enter="submitAnswer" />
+          <input 
+            v-model="userGuess" 
+            type="number" 
+            :placeholder="inputPlaceholder" 
+            class="w-24 text-center text-3xl font-bold border-2 border-purple-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white/80 text-purple-900 placeholder:text-gray-300" 
+            @keyup.enter="submitAnswer" 
+          />
           <button @click="submitAnswer" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-8 rounded-xl font-bold text-lg hover:shadow-lg hover:scale-105 transition-all active:scale-95">Check</button>
         </div>
       </div>
@@ -360,7 +371,7 @@ function onResize() {
         <h2 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-transparent">
           One Last Thing...
         </h2>
-        <p class="text-gray-600 mb-8 font-medium">When should we celebrate your birthday?</p>
+        <p class="text-gray-600 mb-8 font-medium">When should we celebrate you?</p>
 
         <div class="space-y-4 mb-8">
           <div class="relative">
@@ -381,7 +392,7 @@ function onResize() {
           :disabled="isSending"
           class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-xl hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <span v-if="!isSending">Send ✨</span>
+          <span v-if="!isSending">Send Surprise ✨</span>
           <span v-else>Sending...</span>
         </button>
 
