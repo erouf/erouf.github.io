@@ -1,350 +1,413 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import gsap from 'gsap'
 import emailjs from '@emailjs/browser'
 
-// --- CONFIGURATION ---
-const EMAIL_SERVICE_ID = 'service_rfemzas'
-const EMAIL_TEMPLATE_ID = 'template_j8w9l5c'
-const EMAIL_PUBLIC_KEY = 'vYGev7OaoJPuOPmHh'
+// --- GAME STATE ---
+// Options: 'intro', 'question', 'demonstration', 'birthday', 'final'
+const screen = ref('intro') 
+const userGuess = ref('')
+const totalSquares = 12
+const breaksCount = ref(0)
+const feedback = ref('')
 
-// --- STATE ---
-const currentScreen = ref('selection') 
-const userStatus = ref('')             
-const feedbackMsg = ref('')
-const feedbackColor = ref('text-yellow-300')
-const phoneError = ref('')
+// --- BIRTHDAY STATE ---
+const bdayDay = ref('')
+const bdayMonth = ref('')
 const isSending = ref(false)
-const phoneNumber = ref('')
 
-// PUZZLE STATE
-const inputs = ref([4, '', '', 5, '', '', 6, '', ''])
-const lockedIndices = [true, false, false, true, false, false, true, false, false]
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+]
 
-// THREE.JS REFS
+// --- SLIDER STATE (iPhone Unlock) ---
+const sliderTrack = ref(null)
+const sliderKnob = ref(null)
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const knobPosition = ref(0)
+const trackWidth = ref(0)
+const maxDrag = ref(0)
+const sliderUnlocked = ref(false)
+
+// --- THREE.JS VARIABLES ---
 const canvasRef = ref(null)
-let scene, camera, renderer, magicShape, stars
-let mouseX = 0
-let mouseY = 0
+let scene, camera, renderer, controls
+let squares = [] 
+const ROWS = 3
+const COLS = 4
+const GAP = 0.05
+
+// --- LIFECYCLE ---
+onMounted(() => {
+  initThree()
+  createRealisticChocolate()
+  animate()
+  window.addEventListener('resize', onResize)
+  
+  // Slider measurements
+  if (sliderTrack.value && sliderKnob.value) {
+    trackWidth.value = sliderTrack.value.clientWidth
+    maxDrag.value = trackWidth.value - sliderKnob.value.clientWidth - 8
+  }
+  
+  document.addEventListener('mousemove', handleDragMove)
+  document.addEventListener('mouseup', handleDragEnd)
+  document.addEventListener('touchmove', handleDragMove, { passive: false })
+  document.addEventListener('touchend', handleDragEnd)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+  document.removeEventListener('mousemove', handleDragMove)
+  document.removeEventListener('mouseup', handleDragEnd)
+  document.removeEventListener('touchmove', handleDragMove)
+  document.removeEventListener('touchend', handleDragEnd)
+})
+
+// --- SLIDER LOGIC ---
+const knobStyle = computed(() => ({
+  transform: `translateX(${knobPosition.value}px)`,
+  transition: isDragging.value ? 'none' : 'transform 0.3s ease-out'
+}))
+
+const trackFillStyle = computed(() => ({
+  width: `${knobPosition.value + 50}px`,
+  transition: isDragging.value ? 'none' : 'width 0.3s ease-out',
+  opacity: knobPosition.value > 0 ? 1 : 0
+}))
+
+function handleDragStart(e) {
+  if (sliderUnlocked.value) return
+  isDragging.value = true
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX
+  dragStartX.value = clientX - knobPosition.value
+}
+
+function handleDragMove(e) {
+  if (!isDragging.value || sliderUnlocked.value) return
+  e.preventDefault()
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX
+  const newPos = clientX - dragStartX.value
+  knobPosition.value = Math.max(0, Math.min(newPos, maxDrag.value))
+  
+  if (knobPosition.value >= maxDrag.value * 0.95) {
+    unlock()
+  }
+}
+
+function handleDragEnd() {
+  if (!isDragging.value || sliderUnlocked.value) return
+  isDragging.value = false
+  if (knobPosition.value < maxDrag.value * 0.95) {
+    knobPosition.value = 0
+  }
+}
+
+function unlock() {
+  sliderUnlocked.value = true
+  isDragging.value = false
+  knobPosition.value = maxDrag.value 
+  if (navigator.vibrate) navigator.vibrate(50);
+  setTimeout(startGame, 300)
+}
+
+
+// --- THREE.JS SETUP ---
+function initThree() {
+  scene = new THREE.Scene()
+  scene.background = new THREE.Color('#FFF0E5') 
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100)
+  camera.position.set(0, 6, 7)
+  camera.lookAt(0, 0, 0)
+
+  renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  renderer.physicallyCorrectLights = true
+  renderer.toneMapping = THREE.ACESFilmicToneMapping
+  renderer.toneMappingExposure = 1.2
+  
+  if (canvasRef.value) canvasRef.value.appendChild(renderer.domElement)
+
+  controls = new OrbitControls(camera, renderer.domElement)
+  controls.enableZoom = false
+  controls.enablePan = false
+  controls.autoRotate = true 
+  controls.autoRotateSpeed = 0.5
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+  scene.add(ambientLight)
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 4)
+  dirLight.position.set(5, 8, 5)
+  dirLight.castShadow = true
+  dirLight.shadow.mapSize.width = 2048
+  dirLight.shadow.mapSize.height = 2048
+  dirLight.shadow.bias = -0.0001
+  scene.add(dirLight)
+  
+  const fillLight = new THREE.DirectionalLight(0xffeedd, 2)
+  fillLight.position.set(-5, 3, -5)
+  scene.add(fillLight)
+}
+
+function createRealisticChocolate() {
+  const geometry = new THREE.BoxGeometry(0.92, 0.25, 0.92)
+  const material = new THREE.MeshPhysicalMaterial({
+    color: 0x3E2723,     
+    roughness: 0.35,      
+    metalness: 0.0,       
+    clearcoat: 1.0,       
+    clearcoatRoughness: 0.15, 
+    reflectivity: 0.5,    
+    ior: 1.45,            
+  })
+
+  const offsetX = ((COLS - 1) * (1 + GAP)) / 2
+  const offsetZ = ((ROWS - 1) * (1 + GAP)) / 2
+
+  for (let z = 0; z < ROWS; z++) {
+    for (let x = 0; x < COLS; x++) {
+      const mesh = new THREE.Mesh(geometry, material)
+      mesh.position.set(x * (1 + GAP) - offsetX, 0, z * (1 + GAP) - offsetZ)
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+      mesh.userData = { gridX: x, gridZ: z }
+      scene.add(mesh)
+      squares.push(mesh)
+    }
+  }
+}
 
 // --- GAME LOGIC ---
-const selectStatus = (status) => {
-  if (status === 'Taken') {
-    currentScreen.value = 'rejection'
-  } else {
-    userStatus.value = status
-    localStorage.setItem('userStatus', status)
-    currentScreen.value = 'game'
-  }
+function startGame() {
+  controls.autoRotate = false
+  gsap.to(camera.position, { x: 0, y: 8, z: 6, duration: 1.5, ease: "power2.inOut" })
+  
+  const intro = document.getElementById('intro-panel')
+  gsap.to(intro, { 
+    opacity: 0, y: -50, scale: 0.9, duration: 0.5, 
+    onComplete: () => screen.value = 'question' 
+  })
 }
 
-const checkMath = () => {
-  const nums = inputs.value.map(n => n === '' ? 0 : parseInt(n))
-
-  if (nums.includes(0)) {
-    feedbackMsg.value = "Fill all 6 empty circles."
-    feedbackColor.value = "text-yellow-300"
-    return
+function submitAnswer() {
+  if (!userGuess.value) return
+  screen.value = 'demonstration'
+  
+  const correct = totalSquares - 1
+  if (parseInt(userGuess.value) === correct) {
+    feedback.value = "Exactly right! Watch the logic..."
+  } else {
+    feedback.value = `Nice try! For 12 squares, you need ${correct} breaks.`
   }
   
-  const uniqueNums = new Set(nums)
-  if (uniqueNums.size !== 9 || nums.some(n => n < 1 || n > 9)) {
-    feedbackMsg.value = "Use numbers 1-9 exactly once!"
-    feedbackColor.value = "text-red-400"
-    return
-  }
-
-  const side1 = nums[0] + nums[1] + nums[2] + nums[3]
-  const side2 = nums[3] + nums[4] + nums[5] + nums[6]
-  const side3 = nums[6] + nums[7] + nums[8] + nums[0]
-
-  if (side1 === 20 && side2 === 20 && side3 === 20) {
-    currentScreen.value = 'win'
-    triggerWinAnimation()
-  } else {
-    feedbackMsg.value = `Sums: ${side1}, ${side2}, ${side3}. Goal: 20`
-    feedbackColor.value = "text-red-300"
-  }
+  setTimeout(runBreakingAnimation, 300)
 }
 
-const validateAndSend = () => {
-  phoneError.value = ""
-  const cleanNumber = phoneNumber.value.replace(/\D/g, '')
+function runBreakingAnimation() {
+  const tl = gsap.timeline({ 
+    defaults: { ease: "back.out(1.7)", duration: 0.6 },
+    onComplete: () => {
+      // AFTER ANIMATION: Go to Birthday Screen
+      setTimeout(() => {
+        screen.value = 'birthday'
+        // Hide chocolate (move camera away or fade out elements if desired)
+        // For now, we keep it in background but blurred by the UI
+      }, 2000)
+    }
+  })
+
+  // STEP 1: BREAK ROWS
+  tl.to({}, { onStart: () => breaksCount.value = 1 }, "+=0.5")
+  const rows23 = squares.filter(s => s.userData.gridZ > 0)
+  tl.to(rows23.map(s => s.position), { z: "+=0.45", y: "+=0.05", rotationX: "-=0.1" })
+
+  tl.to({}, { onStart: () => breaksCount.value = 2 }, "+=0.1")
+  const row3 = squares.filter(s => s.userData.gridZ > 1)
+  tl.to(row3.map(s => s.position), { z: "+=0.45", y: "+=0.05", rotationX: "-=0.1" })
+
+  // STEP 2: BREAK COLUMNS
+  for (let col = 0; col < COLS - 1; col++) {
+    for (let row = 0; row < ROWS; row++) {
+      tl.to({}, { onStart: () => breaksCount.value++ }, ">-0.1") 
+      const movers = squares.filter(s => s.userData.gridZ === row && s.userData.gridX > col)
+      if (movers.length) {
+        const randRot = (Math.random() - 0.5) * 0.3
+        tl.to(movers.map(s => s.position), { x: "+=0.35", y: "+=0.02" }, "<") 
+        tl.to(movers.map(s => s.rotation), { z: randRot, y: randRot }, "<")
+      }
+    }
+  }
   
-  if (cleanNumber.length !== 10) {
-    phoneError.value = "Please enter a valid 10-digit US number."
+  // Victory Spin
+  tl.to(squares.map(s => s.rotation), {
+    y: Math.PI * 2, x: 0, z: 0, duration: 2,
+    ease: "elastic.out(1, 0.3)",
+    stagger: { each: 0.05, from: "center" }
+  }, "+=0.5")
+}
+
+// --- SEND EMAIL FUNCTION ---
+function sendBirthday() {
+  if (!bdayDay.value || !bdayMonth.value) {
+    alert("Please enter both day and month!")
     return
   }
 
   isSending.value = true
-  
+
   const templateParams = {
-    to_email: 'subscriber@fynx.org',
-    message: `Winner: ${userStatus.value}. Phone: +1 ${cleanNumber}`
+    to_name: "Developer",
+    from_name: "Elenor",
+    message: `Elenor's Birthday is: ${bdayDay.value} of ${bdayMonth.value}`,
+    reply_to: "noreply@game.com"
   }
 
-  emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams, EMAIL_PUBLIC_KEY)
-    .then(() => {
-      alert("Sent! We will contact you shortly.")
-      isSending.value = false
-    }, (error) => {
-      console.error('FAILED...', error)
-      alert("Error sending. Check console.")
-      isSending.value = false
+  // REPLACE THESE WITH YOUR ACTUAL EMAILJS KEYS
+  emailjs.send('service_rfemzas', 'template_j8w9l5c', templateParams, 'vYGev7OaoJPuOPmHh')
+    .then((response) => {
+       console.log('SUCCESS!', response.status, response.text)
+       isSending.value = false
+       screen.value = 'final'
+    }, (err) => {
+       console.log('FAILED...', err)
+       isSending.value = false
+       alert("Something went wrong sending the data. Check console.")
     })
 }
 
-// --- THREE.JS ADVANCED ANIMATION ---
-const onMouseMove = (event) => {
-  mouseX = (event.clientX / window.innerWidth) * 2 - 1
-  mouseY = -(event.clientY / window.innerHeight) * 2 + 1
+function animate() {
+  requestAnimationFrame(animate)
+  controls.update()
+  renderer.render(scene, camera)
 }
 
-const triggerWinAnimation = () => {
-  if (!magicShape) return
-  // Turn shape into a glowing Gold artifact
-  magicShape.material.color.setHex(0xFFD700)
-  magicShape.material.emissive.setHex(0xaa8800)
-  magicShape.material.wireframe = false
-  magicShape.material.roughness = 0.1
-  magicShape.material.metalness = 0.9
-  
-  // Speed up stars
-  if(stars) stars.rotation.z += 1
-}
-
-onMounted(() => {
-  document.addEventListener('mousemove', onMouseMove)
-
-  scene = new THREE.Scene()
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-  renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+function onResize() {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
-  if (canvasRef.value) canvasRef.value.appendChild(renderer.domElement)
-
-  // 1. Main Shape (Icosahedron)
-  const geometry = new THREE.IcosahedronGeometry(1.6, 1)
-  const material = new THREE.MeshStandardMaterial({ 
-    color: 0x60a5fa, // Blue-ish
-    wireframe: true,
-    emissive: 0x1e3a8a,
-    emissiveIntensity: 0.5
-  })
-  magicShape = new THREE.Mesh(geometry, material)
-  scene.add(magicShape)
-
-  // 2. Starfield (Particles)
-  const starGeo = new THREE.BufferGeometry()
-  const starCount = 2000
-  const posArray = new Float32Array(starCount * 3)
-  
-  for(let i = 0; i < starCount * 3; i++) {
-    posArray[i] = (Math.random() - 0.5) * 50 // Spread stars wide
-  }
-  
-  starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
-  const starMat = new THREE.PointsMaterial({ size: 0.05, color: 0xffffff, transparent: true })
-  stars = new THREE.Points(starGeo, starMat)
-  scene.add(stars)
-
-  // Lighting
-  const light = new THREE.PointLight(0xffffff, 2, 100)
-  light.position.set(10, 10, 10)
-  scene.add(light)
-  const ambientLight = new THREE.AmbientLight(0x404040)
-  scene.add(ambientLight)
-
-  camera.position.z = 5
-
-  function animate() {
-    requestAnimationFrame(animate)
-    
-    // Parallax Effect (Move scene based on mouse)
-    camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.05
-    camera.position.y += (mouseY * 0.5 - camera.position.y) * 0.05
-    camera.lookAt(scene.position)
-
-    if (currentScreen.value === 'win') {
-      magicShape.rotation.x += 0.02
-      magicShape.rotation.y += 0.03
-      // Pulse effect
-      const scale = 1.6 + Math.sin(Date.now() * 0.005) * 0.2
-      magicShape.scale.set(scale, scale, scale)
-    } else {
-      // Gentle floating
-      magicShape.rotation.x += 0.002
-      magicShape.rotation.y += 0.002
-      stars.rotation.y -= 0.0005 // Slowly rotate universe
-    }
-    
-    renderer.render(scene, camera)
-  }
-  animate()
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
-  })
-})
-
-onUnmounted(() => {
-  document.removeEventListener('mousemove', onMouseMove)
-})
+}
 </script>
 
 <template>
-  <div ref="canvasRef" class="fixed top-0 left-0 w-full h-full -z-10 bg-gray-900 bg-gradient-to-b from-gray-900 via-purple-900/20 to-black"></div>
+  <div ref="canvasRef" class="fixed inset-0 -z-10 bg-gradient-to-br from-orange-50 via-white to-purple-50"></div>
 
-  <main class="flex flex-col items-center justify-center min-h-screen text-white font-sans p-2 select-none overflow-hidden">
+  <main class="flex flex-col items-center justify-center min-h-screen font-sans overflow-hidden p-4">
     
-    <Transition name="fade" mode="out-in">
+    <div v-if="screen === 'intro'" id="intro-panel" class="relative p-10 rounded-[3rem] text-center max-w-md w-full backdrop-blur-xl bg-white/40 border border-white/50 shadow-2xl shadow-purple-500/10">
+      <h1 class="text-5xl font-extrabold mb-6 leading-tight tracking-tight drop-shadow-sm">
+        <span class="bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+          Why are you visiting again, Elenor?
+        </span>
+      </h1>
+      <p class="mb-10 text-xl font-medium text-gray-700">Let's play another game.</p>
       
-      <div v-if="currentScreen === 'selection'" key="select" class="screen-box border-blue-500/30 shadow-blue-500/20">
-        <h1 class="text-5xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 drop-shadow-lg">
-          ELENOR.. ARE YOU
-        </h1>
-        <div class="flex gap-6 justify-center w-full">
-          <button @click="selectStatus('Single')" class="btn-primary from-cyan-500 to-blue-600 ring-cyan-400">
-            Single
-          </button>
-          <button @click="selectStatus('Taken')" class="btn-primary from-purple-500 to-pink-600 ring-pink-400">
-            Taken
-          </button>
+      <div class="relative w-full h-16 rounded-full bg-gray-200/50 backdrop-blur-md border border-white/60 shadow-inner overflow-hidden p-1" ref="sliderTrack">
+        <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-400 to-purple-500 opacity-50" :style="trackFillStyle"></div>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none" :class="{ 'opacity-0': sliderUnlocked }">
+           <span class="text-xl font-bold text-gray-500/60 animate-shimmer bg-clip-text text-transparent bg-gradient-to-r from-gray-400 via-white to-gray-400 bg-[length:200%_auto]">
+             slide to play
+           </span>
+        </div>
+        <div 
+          ref="sliderKnob"
+          class="relative z-10 h-full aspect-square bg-white rounded-full shadow-md flex items-center justify-center cursor-grab active:cursor-grabbing transition-transform"
+          :class="{ 'bg-gradient-to-br from-cyan-300 to-purple-400 text-white': sliderUnlocked }"
+          :style="knobStyle"
+          @mousedown="handleDragStart"
+          @touchstart.passive="handleDragStart"
+        >
+          <svg v-if="!sliderUnlocked" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-6 h-6 text-gray-400"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+           <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-8 h-8 animate-bounce-short"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
         </div>
       </div>
+    </div>
 
-      <div v-else-if="currentScreen === 'rejection'" key="reject" class="screen-box border-red-500/50 shadow-red-900/50">
-        <h2 class="text-3xl font-bold mb-4 text-red-100">ACCESS DENIED</h2>
-        <div class="w-16 h-1 bg-red-500 mb-6 rounded-full"></div>
-        <p class="text-lg mb-8 text-red-200">Only <strong class="text-white border-b-2 border-red-500">Single</strong> players can enter the game</p>
-        <button @click="currentScreen = 'selection'" class="text-sm text-gray-400 hover:text-white transition hover:scale-105">
-          ← Return to Menu
-        </button>
+    <div v-if="screen === 'question'" class="absolute bottom-12 w-full px-4 animate-fade-up flex justify-center">
+      <div class="bg-white/60 p-8 rounded-3xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.1)] backdrop-blur-xl text-center border border-white/40 max-w-md w-full">
+        <h2 class="text-2xl font-extrabold mb-4 text-gray-800">Chocolate Logic</h2>
+        <p class="mb-8 text-lg font-medium text-gray-700 leading-relaxed">
+          You have a <span class="font-bold text-purple-700">{{ROWS}}x{{COLS}} chocolate bar</span> ({{totalSquares}} squares).
+          <br><br>
+          What is the <span class="border-b-2 border-pink-400">minimum number of breaks</span> required to separate every single square?
+        </p>
+        <div class="flex gap-3 justify-center">
+          <input v-model="userGuess" type="number" placeholder="?" class="w-24 text-center text-3xl font-bold border-2 border-purple-200 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white/80 text-purple-900" @keyup.enter="submitAnswer" />
+          <button @click="submitAnswer" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-8 rounded-xl font-bold text-lg hover:shadow-lg hover:scale-105 transition-all active:scale-95">Check</button>
+        </div>
       </div>
+    </div>
 
-      <div v-else-if="currentScreen === 'game'" key="game" class="flex flex-col items-center w-full max-w-md">
-        <h2 class="text-3xl font-bold mb-2 tracking-wider drop-shadow-md">MAGIC TRIANGLE</h2>
+    <div v-if="screen === 'demonstration'" class="absolute top-16 text-center animate-fade-in px-4 pointer-events-none">
+      <h2 class="text-8xl font-black mb-6 drop-shadow-xl bg-gradient-to-br from-purple-600 to-pink-500 bg-clip-text text-transparent scale-110">
+        {{ breaksCount }}
+      </h2>
+      <div class="bg-white/70 px-8 py-4 rounded-2xl shadow-xl backdrop-blur-xl border border-white/40 inline-block">
+        <p class="font-bold text-xl text-gray-800">{{ feedback }}</p>
+      </div>
+    </div>
+
+    <div v-if="screen === 'birthday'" class="absolute inset-0 flex items-center justify-center p-4 animate-fade-in bg-white/20 backdrop-blur-sm z-50">
+      <div class="bg-white/80 p-10 rounded-[3rem] shadow-2xl backdrop-blur-xl border border-white/60 max-w-md w-full text-center">
         
-        <div class="bg-white/5 p-4 rounded-xl mb-6 text-center backdrop-blur-md border border-white/10 shadow-xl">
-           <p class="text-sm text-blue-100">Fill the empty nodes.<br>Sides must sum to <strong class="text-cyan-300 text-lg">20</strong>.</p>
-        </div>
+        <h2 class="text-4xl font-extrabold mb-2 bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-transparent">
+          One Last Thing...
+        </h2>
+        <p class="text-gray-600 mb-8 font-medium">When should we celebrate your birthday?</p>
 
-        <div class="relative w-[340px] h-[300px] mb-8 transform scale-[0.85] sm:scale-100 transition-transform origin-center">
-          <svg class="absolute top-0 left-0 w-full h-full -z-10 stroke-cyan-500/30 stroke-[4px] drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">
-            <polygon points="170,25 315,275 25,275" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-          </svg>
-
-          <input v-model="inputs[0]" :disabled="true" class="node locked animate-pulse-slow" style="top: 0px; left: 146px;" />
-          <input v-model="inputs[3]" :disabled="true" class="node locked animate-pulse-slow" style="top: 255px; left: 290px;" />
-          <input v-model="inputs[6]" :disabled="true" class="node locked animate-pulse-slow" style="top: 255px; left: 5px;" />
-
-          <input v-model="inputs[1]" class="node editable" style="top: 85px; left: 195px;" placeholder="?" />
-          <input v-model="inputs[2]" class="node editable" style="top: 170px; left: 242px;" placeholder="?" />
-          
-          <input v-model="inputs[4]" class="node editable" style="top: 255px; left: 195px;" placeholder="?" />
-          <input v-model="inputs[5]" class="node editable" style="top: 255px; left: 100px;" placeholder="?" />
-          
-          <input v-model="inputs[7]" class="node editable" style="top: 170px; left: 52px;" placeholder="?" />
-          <input v-model="inputs[8]" class="node editable" style="top: 85px; left: 100px;" placeholder="?" />
-        </div>
-
-        <button @click="checkMath" class="px-12 py-4 bg-gradient-to-r from-green-500 to-emerald-700 hover:from-green-400 hover:to-emerald-600 rounded-full font-bold shadow-[0_0_30px_rgba(34,197,94,0.4)] transition-all transform active:scale-95 text-lg tracking-wide border border-green-400/30">
-          VERIFY SUMS
-        </button>
-
-        <p :class="['mt-6 text-center font-bold text-lg h-8 transition-all duration-300', feedbackColor]">{{ feedbackMsg }}</p>
-      </div>
-
-      <div v-else-if="currentScreen === 'win'" key="win" class="screen-box border-yellow-400/50 shadow-[0_0_60px_rgba(250,204,21,0.3)]">
-        <h1 class="text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-orange-400 to-yellow-500 drop-shadow-sm">
-          VICTORY
-        </h1>
-        <p class="text-yellow-100/80 mb-8 text-sm tracking-widest uppercase">Genius Verified</p>
-        
-        <div class="flex flex-col gap-3 w-full max-w-xs">
-          <label class="text-left text-xs font-bold text-yellow-500/80 uppercase tracking-widest pl-1">Mobile Number</label>
-          
-          <div class="flex items-center gap-2 group">
-            <div class="bg-gray-800/80 border border-gray-600 rounded-lg px-3 py-3 flex items-center gap-2 text-gray-300 select-none">
-              <span>🇺🇸</span>
-              <span class="font-bold font-mono text-gray-400">+1</span>
+        <div class="space-y-4 mb-8">
+          <div class="relative">
+            <select v-model="bdayMonth" class="w-full appearance-none bg-white border-2 border-pink-100 px-6 py-4 rounded-2xl text-lg font-bold text-gray-700 focus:outline-none focus:border-pink-400 focus:ring-4 focus:ring-pink-400/20 transition-all cursor-pointer">
+              <option value="" disabled selected>Select Month</option>
+              <option v-for="m in months" :key="m" :value="m">{{ m }}</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-pink-400">
+              <svg class="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
             </div>
-
-            <input 
-              v-model="phoneNumber" 
-              type="tel" 
-              maxlength="10"
-              placeholder="555 000 0000"
-              class="flex-1 bg-gray-900/50 text-white font-mono text-lg px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition-all placeholder-gray-600"
-              @input="phoneNumber = phoneNumber.replace(/\D/g,'')"
-            />
           </div>
 
-          <p v-if="phoneError" class="text-red-400 text-xs font-bold pl-1 animate-pulse">{{ phoneError }}</p>
-          
-          <button 
-            @click="validateAndSend" 
-            :disabled="isSending"
-            class="mt-6 w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 text-black font-black py-4 px-6 rounded-lg transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
-          >
-            {{ isSending ? 'TRANSMITTING...' : 'CLAIM REWARD' }}
-          </button>
+          <input v-model="bdayDay" type="number" min="1" max="31" placeholder="Day (1-31)" class="w-full bg-white border-2 border-pink-100 px-6 py-4 rounded-2xl text-lg font-bold text-gray-700 focus:outline-none focus:border-pink-400 focus:ring-4 focus:ring-pink-400/20 transition-all" />
         </div>
-      </div>
 
-    </Transition>
+        <button 
+          @click="sendBirthday" 
+          :disabled="isSending"
+          class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-xl hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          <span v-if="!isSending">Send ✨</span>
+          <span v-else>Sending...</span>
+        </button>
+
+      </div>
+    </div>
+
+    <div v-if="screen === 'final'" class="absolute inset-0 flex items-center justify-center p-4 animate-fade-in bg-white/30 backdrop-blur-md z-50">
+      <div class="text-center p-12 rounded-[3rem] bg-white/90 shadow-2xl">
+        <div class="text-6xl mb-6">💌</div>
+        <h2 class="text-4xl font-extrabold mb-4 text-gray-800">Received!</h2>
+        <p class="text-xl text-gray-600">Thanks for playing, Elenor.</p>
+        <button @click="location.reload()" class="mt-8 text-pink-500 font-bold hover:underline">Play Again</button>
+      </div>
+    </div>
+
   </main>
 </template>
 
-<style scoped>
-/* UTILITIES */
-.screen-box {
-  @apply text-center bg-gray-900/40 p-10 rounded-2xl backdrop-blur-xl border w-full max-w-sm flex flex-col items-center transition-all duration-500;
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
-}
+<style>
+.animate-fade-up { animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+.animate-bounce-short { animation: bounceShort 0.5s ease-in-out; }
+.animate-shimmer { background-size: 200% auto; animation: shimmer 3s linear infinite; }
 
-.btn-primary {
-  @apply px-8 py-3 rounded-xl font-bold transition-all text-white bg-gradient-to-br shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 border border-white/10 hover:ring-2 ring-offset-2 ring-offset-gray-900;
-}
-
-/* NODES */
-.node {
-  @apply absolute w-12 h-12 text-center text-xl font-bold rounded-full border-2 shadow-xl outline-none transition-all duration-300 z-10;
-  line-height: 2.7rem;
-}
-
-.locked {
-  @apply bg-slate-800/90 border-slate-600 text-slate-400 cursor-default shadow-inner font-mono;
-}
-
-.editable {
-  @apply bg-white/90 text-slate-900 border-cyan-400 cursor-pointer shadow-[0_0_15px_rgba(34,211,238,0.3)];
-}
-.editable:focus {
-  @apply border-cyan-300 bg-white scale-125 ring-4 ring-cyan-400/40 z-50 shadow-[0_0_25px_rgba(34,211,238,0.6)];
-}
-
-/* CUSTOM ANIMATIONS */
-.animate-pulse-slow {
-  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* VUE TRANSITIONS (The Fade Effect) */
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px) scale(0.95);
-  filter: blur(10px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-20px) scale(1.05);
-  filter: blur(10px);
-}
+@keyframes shimmer { to { background-position: 200% center; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes bounceShort { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20%); } }
 </style>
