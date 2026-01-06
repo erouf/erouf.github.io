@@ -75,11 +75,16 @@
         </p>
       </header>
 
+      <!-- ✅ NEW: Photo Gallery -->
+      <PhotoGallery />
+
       <!-- Countdown Timer -->
-      <CountdownTimer 
-        :targetDate="targetDate"
-        @hover="isHovering = $event"
-      />
+      <div class="mt-12 w-full">
+        <CountdownTimer 
+          :targetDate="targetDate"
+          @hover="isHovering = $event"
+        />
+      </div>
 
       <!-- Footer Info -->
       <footer class="mt-16 text-center animate-fade-in" style="animation-delay: 0.8s;">
@@ -106,8 +111,9 @@ import { ref, reactive } from 'vue'
 import CountdownTimer from './components/CountdownTimer.vue'
 import ParticleBackground from './components/ParticleBackground.vue'
 import MorphingBlob from './components/MorphingBlob.vue'
+import PhotoGallery from './components/PhotoGallery.vue'  // ✅ ADD THIS
 
-// Target date
+// Target date - May 26, 2026
 const targetDate = new Date(2026, 4, 26, 0, 0, 0)
 
 // Cursor tracking
@@ -121,7 +127,6 @@ const handleMouseMove = (e) => {
   cursor.x = e.clientX
   cursor.y = e.clientY
   
-  // Smooth follow for dot
   if (dotAnimation) cancelAnimationFrame(dotAnimation)
   const animateDot = () => {
     cursorDot.x += (cursor.x - cursorDot.x) * 0.15
