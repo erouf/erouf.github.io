@@ -108,7 +108,7 @@ import ParticleBackground from './components/ParticleBackground.vue'
 import MorphingBlob from './components/MorphingBlob.vue'
 
 // Target date
-const targetDate = new Date('2026-05-26T00:00:00')
+const targetDate = new Date(2026, 4, 26, 0, 0, 0)
 
 // Cursor tracking
 const cursor = reactive({ x: 0, y: 0 })
