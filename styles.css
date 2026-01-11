@@ -1,0 +1,110 @@
+body, h1, form {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #0d0d0d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #fff;
+}
+
+.container {
+    text-align: center;
+    background-color: #1a1a1a;
+    padding: 40px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 69, 0, 0.5);
+    max-width: 500px; /* Increased max-width for better spacing */
+    width: 100%;
+}
+
+.logo {
+    width: 100px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 22px;
+    color: #FF4500;
+    margin-bottom: 15px;
+}
+
+p {
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #ddd;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input[type="email"] {
+    width: 90%; /* Reduced width slightly to fit better */
+    padding: 12px; /* Slightly larger padding for a bigger field */
+    margin-bottom: 10px;
+    border: 1px solid #FF4500;
+    border-radius: 4px;
+    background-color: #262626;
+    color: #fff;
+    font-size: 18px; /* Increased font size for better readability */
+}
+
+input[type="submit"] {
+    padding: 12px;
+    background-color: #FF4500;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+input[type="submit"]:hover {
+    background-color: #e63e00;
+}
+
+.hidden {
+    display: none;
+}
+
+.container {
+    text-align: center;
+    background-color: #1a1a1a;
+    padding: 40px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 69, 0, 0.5);
+    max-width: 500px;
+    width: 100%;
+    margin-top: 100px;
+}
+
+h1 {
+    color: #FF4500;
+    margin-bottom: 15px;
+}
+
+p {
+    color: #ddd;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #FF4500;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+.btn:hover {
+    background-color: #e63e00;
+}
