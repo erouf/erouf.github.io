@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fynx AI - Empowering Decisions with the Glory of Truth</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <img src="fynx_logo_black_bg_300x300.png" alt="Fynx AI Logo" class="logo">
+        <h1>Empowering Decisions with the Glory of Truth</h1>
+        <p>Stay updated with the latest insights and updates from Fynx AI.</p>
+
+        <form id="subscribeForm" action="https://formsubmit.co/subscriber@fynx.org" method="POST">
+            <div class="form-group">
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-control" 
+                    placeholder="Enter your email address" 
+                    required
+                >
+            </div>
+
+            <input type="hidden" name="_subject" value="New Subscription for Fynx AI!">
+            <input type="hidden" name="_next" value="https://www.fynx.org/thank-you">
+            <input type="hidden" name="_captcha" value="false">
+
+            <button type="submit" id="submitBtn" class="btn btn-lg btn-dark btn-block">Subscribe</button>
+        </form>
+
+        <p id="feedback" class="hidden"></p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("subscribeForm");
+            const feedback = document.getElementById("feedback");
+
+            // Check if the user has already subscribed
+            if (localStorage.getItem("fynx_subscribed") === "true") {
+                form.style.display = "none"; // Hide form
+                feedback.classList.remove("hidden");
+                feedback.innerText = "You've already subscribed. Thank you!";
+                feedback.style.color = "green";
+                return; // Prevent further code from running
+            }
+
+            form.addEventListener("submit", function (event) {
+                // Prevent submission if already submitted
+                if (localStorage.getItem("fynx_subscribed") === "true") {
+                    event.preventDefault();
+                    return;
+                }
+
+                // Set localStorage flag AFTER successful submission
+                localStorage.setItem("fynx_subscribed", "true");
+            });
+        });
+    </script>
+    
+    <script type="text/javascript">
+    _linkedin_partner_id = "6968194";
+    window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+    window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+    </script><script type="text/javascript">
+    (function(l) {
+    if (!l){window.lintrk = function(a,b){window.lintrk.q.push([a,b])};
+    window.lintrk.q=[]}
+    var s = document.getElementsByTagName("script")[0];
+    var b = document.createElement("script");
+    b.type = "text/javascript";b.async = true;
+    b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
+    s.parentNode.insertBefore(b, s);})(window.lintrk);
+    </script>
+    <noscript>
+    <img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=6968194&fmt=gif" />
+    </noscript>
+    
+</body>
+</html>
