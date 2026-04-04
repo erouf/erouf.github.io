@@ -1,83 +1,971 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fynx AI - Empowering Decisions with the Glory of Truth</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Fynx AI — The Trust Layer for Online Reviews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --amber:#F5A623;--fire:#E8480A;--crimson:#C0192A;--deep:#7A0C18;
+  --gold:#F7D060;--bg:#060608;--surface:#0D0D10;--surface2:#131317;
+  --border:rgba(245,166,35,0.12);--border2:rgba(232,72,10,0.18);
+  --text:#F0EDE8;--muted:#7A7770;--green:#4ade80;
+  --syne:'Syne',sans-serif;--mono:'DM Mono',monospace;--body:'Instrument Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{font-family:var(--body);color:var(--text);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* Noise */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:200px;pointer-events:none;z-index:1000;opacity:.5}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:900;padding:20px 0;transition:all .4s;border-bottom:1px solid transparent}
+#nav.scrolled{background:rgba(6,6,8,.9);backdrop-filter:blur(18px);padding:14px 0;border-color:var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--syne);font-size:1.25rem;font-weight:800;color:var(--text);text-decoration:none}
+.nav-logo img{width:32px;height:32px;object-fit:contain}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;color:var(--muted);text-decoration:none;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--amber)}
+.nav-cta{font-family:var(--syne);font-size:.8rem;font-weight:600;padding:8px 20px;border:1px solid var(--fire);color:var(--fire);background:0;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);transition:all .2s;text-decoration:none}
+.nav-cta:hover{background:var(--fire);color:#fff}
+
+/* BUTTONS */
+.btn-primary{font-family:var(--syne);font-weight:700;font-size:.85rem;padding:14px 28px;background:linear-gradient(135deg,var(--fire),var(--crimson));color:#fff;cursor:pointer;border:none;clip-path:polygon(10px 0%,100% 0%,100% calc(100% - 10px),calc(100% - 10px) 100%,0% 100%,0% 10px);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;text-decoration:none;display:inline-block}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--amber),var(--fire));opacity:0;transition:opacity .3s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(232,72,10,.4)}
+.btn-primary:hover::before{opacity:1}
+.btn-primary span{position:relative;z-index:1}
+.btn-ghost{font-family:var(--syne);font-weight:600;font-size:.85rem;padding:13px 28px;background:0;color:var(--text);cursor:pointer;border:1px solid rgba(240,237,232,.15);clip-path:polygon(10px 0%,100% 0%,100% calc(100% - 10px),calc(100% - 10px) 100%,0% 100%,0% 10px);transition:all .2s;text-decoration:none;display:inline-block}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+
+/* HERO */
+#hero{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(232,72,10,.06) 0%,transparent 70%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(245,166,35,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,.04) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent 70%)}
+.hero-content{position:relative;z-index:10;max-width:1200px;margin:0 auto;padding:140px 32px 80px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:80px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(245,166,35,.25);padding:6px 14px;margin-bottom:28px}
+.badge-dot{width:6px;height:6px;background:var(--amber);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.hero-h1{font-family:var(--syne);font-size:clamp(2.4rem,5vw,4rem);font-weight:800;line-height:1.05;letter-spacing:-.04em;margin-bottom:24px}
+.hero-h1 em{font-style:normal;color:var(--amber)}
+.hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;max-width:480px;margin-bottom:40px}
+.hero-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+
+/* Hero Visual */
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center;height:480px}
+.fox-wrap{position:absolute;z-index:5;animation:fox-float 6s ease-in-out infinite}
+@keyframes fox-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.fox-wrap img{width:200px;height:200px;object-fit:contain;filter:drop-shadow(0 0 40px rgba(232,72,10,.5)) drop-shadow(0 0 80px rgba(245,166,35,.2))}
+.ring{position:absolute;border-radius:50%;border:1px solid;animation:spin linear infinite}
+.ring-1{width:280px;height:280px;border-color:rgba(245,166,35,.2);animation-duration:20s}
+.ring-2{width:360px;height:360px;border-color:rgba(232,72,10,.15);animation-duration:30s;animation-direction:reverse}
+.ring-3{width:440px;height:440px;border-color:rgba(192,25,42,.1);animation-duration:45s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-line{position:absolute;left:50%;width:380px;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent);transform:translateX(-50%);animation:scanY 3s ease-in-out infinite;top:50%}
+@keyframes scanY{0%{transform:translateX(-50%) translateY(-180px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateX(-50%) translateY(180px);opacity:0}}
+.signal-tag{position:absolute;font-family:var(--mono);font-size:.65rem;padding:5px 10px;border:1px solid;opacity:0;animation:tagBlink 4s ease-in-out infinite}
+.tag-fake{border-color:rgba(192,25,42,.5);color:var(--crimson);background:rgba(192,25,42,.08);top:20%;left:4%;animation-delay:0s}
+.tag-real{border-color:rgba(245,166,35,.4);color:var(--amber);background:rgba(245,166,35,.08);top:60%;right:4%;animation-delay:1.4s}
+.tag-ai{border-color:rgba(232,72,10,.4);color:var(--fire);background:rgba(232,72,10,.08);bottom:20%;left:8%;animation-delay:2.8s}
+@keyframes tagBlink{0%,100%{opacity:0}30%,70%{opacity:1}}
+
+/* COMMONS */
+.section-wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+section{padding:120px 0;position:relative}
+.section-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fire);margin-bottom:16px;display:block}
+.section-h2{font-family:var(--syne);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:20px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* WHAT WE DO */
+#what{background:var(--surface)}
+.what-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+.what-intro{font-size:1.1rem;color:var(--muted);line-height:1.75;margin-bottom:40px}
+.cap-item{display:flex;align-items:flex-start;gap:16px;padding:20px 0;border-bottom:1px solid var(--border)}
+.cap-icon{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--border2);clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px)}
+.cap-icon svg{width:18px;height:18px}
+.cap-title{font-family:var(--syne);font-size:.95rem;font-weight:700;margin-bottom:4px}
+.cap-desc{font-size:.85rem;color:var(--muted);line-height:1.6}
+.score-card{background:var(--surface2);border:1px solid var(--border);padding:32px;clip-path:polygon(16px 0%,100% 0%,100% calc(100% - 16px),calc(100% - 16px) 100%,0% 100%,0% 16px);margin-bottom:16px}
+.score-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.score-title{font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.score-badge{font-family:var(--mono);font-size:.7rem;padding:4px 10px;border:1px solid rgba(192,25,42,.4);color:var(--crimson)}
+.review-text{font-size:.9rem;color:rgba(240,237,232,.7);line-height:1.6;margin-bottom:20px;border-left:2px solid var(--border2);padding-left:16px}
+.score-bars{display:flex;flex-direction:column;gap:10px}
+.score-bar{display:flex;align-items:center;gap:12px}
+.score-bar-label{font-family:var(--mono);font-size:.65rem;color:var(--muted);width:100px;flex-shrink:0}
+.score-bar-track{flex:1;height:4px;background:rgba(255,255,255,.06);overflow:hidden}
+.score-bar-fill{height:100%;width:0;transition:width 1.2s ease-out}
+.score-val{font-family:var(--mono);font-size:.65rem;color:var(--amber);width:32px;text-align:right}
+.real-score-card{background:linear-gradient(135deg,rgba(245,166,35,.06),rgba(232,72,10,.04));border:1px solid rgba(245,166,35,.2);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;clip-path:polygon(16px 0%,100% 0%,100% calc(100% - 16px),calc(100% - 16px) 100%,0% 100%,0% 16px)}
+.real-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.real-val{font-family:var(--syne);font-size:2.5rem;font-weight:800;color:var(--amber);line-height:1}
+.real-delta{font-family:var(--mono);font-size:.75rem;color:var(--crimson);margin-top:4px}
+
+/* WHY */
+#why{position:relative;overflow:hidden}
+.why-bg{position:absolute;right:-200px;top:50%;transform:translateY(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(192,25,42,.06),transparent 70%);pointer-events:none}
+.why-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.why-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.stat-block{background:var(--bg);padding:36px 28px;transition:background .3s}
+.stat-block:hover{background:var(--surface)}
+.stat-num{font-family:var(--syne);font-size:2.8rem;font-weight:800;line-height:1;margin-bottom:8px;background:linear-gradient(135deg,var(--gold),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:.82rem;color:var(--muted);line-height:1.5}
+.why-points{display:flex;flex-direction:column;gap:32px}
+.why-point{display:flex;gap:20px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+.why-point:last-child{border:none;padding:0}
+.why-num{font-family:var(--syne);font-size:3rem;font-weight:800;color:rgba(245,166,35,.12);line-height:1;flex-shrink:0;width:48px}
+.why-point-title{font-family:var(--syne);font-size:1rem;font-weight:700;margin-bottom:6px}
+.why-point-desc{font-size:.87rem;color:var(--muted);line-height:1.65}
+
+/* WHY US */
+#whyus{background:var(--surface)}
+.whyus-header{margin-bottom:60px;max-width:600px}
+.credential-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.cred-block{background:var(--surface);padding:40px 32px;position:relative;overflow:hidden;transition:background .3s}
+.cred-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--fire),transparent);opacity:0;transition:opacity .3s}
+.cred-block:hover{background:var(--surface2)}
+.cred-block:hover::before{opacity:1}
+.cred-tag{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fire);margin-bottom:16px}
+.cred-title{font-family:var(--syne);font-size:1.1rem;font-weight:700;margin-bottom:10px}
+.cred-desc{font-size:.85rem;color:var(--muted);line-height:1.6}
+
+/* ARCHITECTURE */
+#architecture{position:relative;overflow:hidden}
+.arch-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(245,166,35,.04),transparent 70%);pointer-events:none}
+.gcp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:48px}
+.gcp-card{background:var(--bg);padding:32px 24px;position:relative;overflow:hidden;transition:background .3s}
+.gcp-card:hover{background:var(--surface)}
+.gcp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--fire),var(--amber));transform:scaleX(0);transform-origin:left;transition:transform .4s}
+.gcp-card:hover::before{transform:scaleX(1)}
+.gcp-icon{font-size:1.6rem;margin-bottom:12px}
+.gcp-tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fire);margin-bottom:10px}
+.gcp-title{font-family:var(--syne);font-size:1rem;font-weight:700;margin-bottom:8px}
+.gcp-desc{font-size:.82rem;color:var(--muted);line-height:1.6}
+.gcp-pct{font-family:var(--syne);font-size:1.8rem;font-weight:800;color:var(--amber);margin-top:12px}
+
+/* FLOW DIAGRAM */
+.flow-wrap{background:var(--surface);border:1px solid var(--border);padding:48px 32px;position:relative;overflow:hidden;clip-path:polygon(20px 0%,100% 0%,100% calc(100% - 20px),calc(100% - 20px) 100%,0% 100%,0% 20px);margin-bottom:40px}
+.flow-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--fire),var(--amber),transparent)}
+.flow-scan{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--amber),transparent);animation:flowScan 4s ease-in-out infinite;z-index:10;box-shadow:0 0 20px var(--amber),0 0 60px rgba(245,166,35,.3)}
+@keyframes flowScan{0%{top:0;opacity:0}10%{opacity:.8}90%{opacity:.8}100%{top:calc(100% - 3px);opacity:0}}
+
+.flow-label{text-align:center;margin-bottom:28px;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+
+.flow-col{display:flex;flex-direction:column;align-items:center;gap:0;position:relative}
+
+/* Nodes */
+.f-node{
+  background:var(--surface2);border:1px solid var(--border2);
+  padding:18px 28px;text-align:center;position:relative;
+  width:100%;max-width:360px;
+  clip-path:polygon(10px 0%,100% 0%,100% calc(100% - 10px),calc(100% - 10px) 100%,0% 100%,0% 10px);
+  transition:all .3s;opacity:0;transform:translateY(20px);
+}
+.f-node.visible{opacity:1;transform:none}
+.f-node:hover{border-color:var(--amber);background:rgba(245,166,35,.03)}
+.f-node-title{font-family:var(--syne);font-size:.9rem;font-weight:700;margin-bottom:4px}
+.f-node-sub{font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.04em}
+.f-node-gcp{font-family:var(--mono);font-size:.55rem;color:var(--fire);letter-spacing:.08em;margin-top:6px}
+.f-node.gcp{border-color:rgba(66,133,244,.3)}
+.f-node.vertex{border-color:rgba(245,166,35,.3)}
+.f-node.blocked{border-color:rgba(192,25,42,.4)}
+.f-node.passed{border-color:rgba(74,222,128,.4)}
+
+/* Animated arrows */
+.f-arrow{display:flex;align-items:center;justify-content:center;height:48px;position:relative}
+.f-arrow-v{width:2px;height:100%;background:linear-gradient(180deg,rgba(232,72,10,.3),rgba(245,166,35,.3));position:relative}
+.f-arrow-v::before{content:'';position:absolute;width:6px;height:6px;background:var(--amber);clip-path:polygon(50% 100%,0 0,100% 0);left:50%;transform:translateX(-50%);animation:dropV 1.8s ease-in-out infinite}
+@keyframes dropV{0%{top:-6px;opacity:0}15%{opacity:1}85%{opacity:1}100%{top:calc(100% - 2px);opacity:0}}
+
+/* Particles on arrows */
+.f-arrow-v::after{content:'';position:absolute;width:4px;height:4px;background:var(--fire);border-radius:0;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);left:50%;transform:translateX(-50%);animation:dropV 1.8s .9s ease-in-out infinite}
+
+/* Split row */
+.f-split{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;align-items:center;width:100%}
+.f-split-line{display:flex;align-items:center;justify-content:center}
+.f-split-h{width:100%;height:2px;background:linear-gradient(90deg,var(--fire),var(--amber));position:relative}
+.f-split-h::after{content:'';position:absolute;width:4px;height:4px;background:var(--amber);clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);top:50%;transform:translateY(-50%);animation:slideH 2s ease-in-out infinite}
+@keyframes slideH{0%{left:0;opacity:0}20%{opacity:1}80%{opacity:1}100%{left:calc(100% - 4px);opacity:0}}
+
+.f-or{font-family:var(--mono);font-size:.6rem;color:var(--muted);text-align:center}
+
+/* Credit bars */
+.credit-section{background:linear-gradient(135deg,rgba(245,166,35,.04),rgba(232,72,10,.02));border:1px solid rgba(245,166,35,.15);padding:32px;clip-path:polygon(16px 0%,100% 0%,100% calc(100% - 16px),calc(100% - 16px) 100%,0% 100%,0% 16px)}
+.credit-bar-wrap{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)}
+.credit-bar-wrap:last-child{border:none}
+.credit-bar-label{font-family:var(--mono);font-size:.72rem;color:var(--muted);width:180px;flex-shrink:0}
+.credit-bar-outer{flex:1;height:8px;background:rgba(255,255,255,.04);overflow:hidden}
+.credit-bar-inner{height:100%;width:0;transition:width 1.5s cubic-bezier(.16,1,.3,1)}
+.credit-bar-pct{font-family:var(--mono);font-size:.72rem;color:var(--amber);width:40px;text-align:right;flex-shrink:0}
+
+/* DEMO */
+#demo{background:var(--surface)}
+.demo-box{max-width:800px;margin:0 auto;background:var(--bg);border:1px solid var(--border);padding:40px;clip-path:polygon(16px 0%,100% 0%,100% calc(100% - 16px),calc(100% - 16px) 100%,0% 100%,0% 16px);position:relative}
+.demo-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--fire),var(--amber))}
+.demo-textarea{width:100%;min-height:100px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--body);font-size:.9rem;padding:16px;resize:vertical;outline:none;margin-bottom:16px;transition:border-color .2s}
+.demo-textarea:focus{border-color:var(--amber)}
+.demo-textarea::placeholder{color:var(--muted)}
+#demoLoading{display:none;text-align:center;padding:20px;margin-top:16px}
+#demoLoading.active{display:block}
+.loading-bar{width:100%;height:3px;background:var(--surface2);overflow:hidden;margin-top:12px;border-radius:0}
+.loading-bar-inner{width:0;height:100%;background:linear-gradient(90deg,var(--fire),var(--amber))}
+@keyframes loadProgress{0%{width:0}50%{width:70%}100%{width:100%}}
+#demoResults{display:none;margin-top:24px;border-top:1px solid var(--border);padding-top:24px}
+#demoResults.active{display:block;animation:fadeUp .5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.demo-scores{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.demo-score-item{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--border)}
+.demo-score-label{font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.08em;margin-bottom:4px}
+.demo-score-val{font-family:var(--syne);font-size:1.8rem;font-weight:800}
+.demo-explanation{font-size:.85rem;color:var(--muted);line-height:1.6;border-left:2px solid var(--border2);padding-left:16px}
+
+/* TRACTION */
+#traction{}
+.traction-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:40px;margin-bottom:48px}
+.traction-block{background:var(--bg);padding:32px 24px;text-align:center;transition:background .3s}
+.traction-block:hover{background:var(--surface)}
+.traction-val{font-family:var(--syne);font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,var(--gold),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.traction-desc{font-size:.8rem;color:var(--muted);line-height:1.5}
+.milestone{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.milestone:last-child{border:none}
+.m-dot{width:10px;height:10px;flex-shrink:0;margin-top:5px;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)}
+.m-dot.done{background:var(--green)}
+.m-dot.active{background:var(--amber);animation:pulse-dot 2s ease-in-out infinite}
+.m-dot.next{background:var(--muted)}
+.m-text{font-size:.85rem;color:var(--muted);line-height:1.5}
+.m-text strong{color:var(--text);font-weight:600}
+.supported-row{display:flex;justify-content:center;align-items:center;gap:48px;flex-wrap:wrap;margin-top:48px;padding-top:32px;border-top:1px solid var(--border)}
+.supported-item{font-family:var(--syne);font-size:.95rem;font-weight:700;color:var(--muted);opacity:.5;transition:opacity .3s}
+.supported-item:hover{opacity:1}
+
+/* FOUNDERS */
+.founders-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:60px}
+.founder-card{background:var(--surface);border:1px solid var(--border);padding:40px;clip-path:polygon(16px 0%,100% 0%,100% calc(100% - 16px),calc(100% - 16px) 100%,0% 100%,0% 16px);position:relative;overflow:hidden}
+.founder-card::after{content:'';position:absolute;bottom:-60px;right:-60px;width:160px;height:160px;background:radial-gradient(circle,rgba(232,72,10,.08),transparent 70%)}
+.founder-name{font-family:var(--syne);font-size:1.4rem;font-weight:800;margin-bottom:4px}
+.founder-role{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:var(--fire);margin-bottom:20px}
+.founder-bio{font-size:.88rem;color:var(--muted);line-height:1.7;margin-bottom:24px}
+.founder-tags{display:flex;flex-wrap:wrap;gap:8px}
+.f-tag{font-family:var(--mono);font-size:.65rem;padding:4px 10px;border:1px solid var(--border);color:rgba(240,237,232,.5)}
+.f-tag.accent{border-color:rgba(245,166,35,.3);color:var(--amber)}
+
+/* ORIGIN */
+#origin{background:var(--surface);position:relative;overflow:hidden}
+.origin-bg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:800px;height:400px;background:radial-gradient(ellipse,rgba(232,72,10,.04),transparent 70%);pointer-events:none}
+.origin-inner{max-width:760px;margin:0 auto;text-align:center}
+.origin-quote{font-family:var(--syne);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.4;margin-bottom:32px}
+.origin-quote strong{color:var(--amber)}
+.origin-body{font-size:.95rem;color:var(--muted);line-height:1.8;max-width:600px;margin:0 auto 40px}
+.origin-tags{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+.origin-tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 16px;border:1px solid var(--border);color:var(--muted)}
+
+/* VISION */
+#vision{position:relative;overflow:hidden}
+.vision-bg{position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 50% 100%,rgba(245,166,35,.05),transparent 70%)}
+.vision-inner{text-align:center;max-width:900px;margin:0 auto;position:relative;z-index:2}
+.vision-h2{font-family:var(--syne);font-size:clamp(2rem,4.5vw,3.5rem);font-weight:800;letter-spacing:-.04em;line-height:1.08;margin-bottom:24px}
+.vision-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto 48px}
+.vision-pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-bottom:64px}
+.pillar{background:var(--bg);padding:32px 24px;border-top:2px solid transparent;transition:all .3s}
+.pillar:hover{background:var(--surface);border-top-color:var(--fire)}
+.pillar-icon{font-size:1.5rem;margin-bottom:12px}
+.pillar-title{font-family:var(--syne);font-size:.95rem;font-weight:700;margin-bottom:8px}
+.pillar-desc{font-size:.82rem;color:var(--muted);line-height:1.6}
+
+/* CTA */
+#cta{background:var(--surface);position:relative;overflow:hidden}
+.cta-inner{text-align:center;max-width:700px;margin:0 auto;position:relative;z-index:2}
+.cta-bg-fox{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(232,72,10,.08),transparent 65%);pointer-events:none}
+.cta-h2{font-family:var(--syne);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-.03em;margin-bottom:16px}
+.cta-sub{font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:40px}
+.cta-form{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.email-input{font-family:var(--body);font-size:.9rem;padding:14px 20px;background:var(--surface2);border:1px solid var(--border);color:var(--text);outline:none;min-width:280px;clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px);transition:border-color .2s}
+.email-input:focus{border-color:var(--amber)}
+.email-input::placeholder{color:var(--muted)}
+.cta-note{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+
+/* FOOTER */
+footer{padding:48px 0 32px;border-top:1px solid var(--border)}
+.footer-inner{max-width:1200px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px}
+.footer-logo{font-family:var(--syne);font-size:1.1rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.footer-logo img{width:24px;height:24px;object-fit:contain}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap}
+.footer-links a{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--amber)}
+.footer-copy{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero-content{grid-template-columns:1fr;gap:48px;padding-top:120px}
+  .hero-visual{height:320px}
+  .fox-wrap img{width:140px;height:140px}
+  .ring-1{width:200px;height:200px}.ring-2{width:260px;height:260px}.ring-3{width:320px;height:320px}
+  .what-grid,.why-layout,.founders-grid{grid-template-columns:1fr}
+  .credential-grid,.gcp-grid,.vision-pillars{grid-template-columns:1fr}
+  .traction-grid{grid-template-columns:1fr 1fr}
+  .demo-scores{grid-template-columns:1fr}
+  .f-split{grid-template-columns:1fr}
+  .f-split-line{display:none}
+  .nav-links{display:none}
+  .signal-tag{display:none}
+}
+@media(max-width:600px){
+  section{padding:80px 0}.section-wrap{padding:0 20px}
+  .traction-grid{grid-template-columns:1fr}
+  .cta-form{flex-direction:column;align-items:center}
+  .email-input{min-width:100%;max-width:340px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <img src="fynx_logo_black_bg_300x300.png" alt="Fynx AI Logo" class="logo">
-        <h1>Empowering Decisions with the Glory of Truth</h1>
-        <p>Stay updated with the latest insights and updates from Fynx AI.</p>
 
-        <form id="subscribeForm" action="https://formsubmit.co/subscriber@fynx.org" method="POST">
-            <div class="form-group">
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    class="form-control" 
-                    placeholder="Enter your email address" 
-                    required
-                >
-            </div>
+<!-- ═══ NAV ═══ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#hero"><img src="./fynx_logo_high_res-removebg-preview.png" alt="Fynx"/>Fynx AI</a>
+    <div class="nav-links">
+      <a href="#what">Product</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#demo">Demo</a>
+      <a href="#founders">Team</a>
+      <a href="#vision">Vision</a>
+    </div>
+    <a href="#cta" class="nav-cta">Request Demo</a>
+  </div>
+</nav>
 
-            <input type="hidden" name="_subject" value="New Subscription for Fynx AI!">
-            <input type="hidden" name="_next" value="https://www.fynx.org/thank-you">
-            <input type="hidden" name="_captcha" value="false">
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div>
+      <div class="hero-badge"><span class="badge-dot"></span>Trust Infrastructure · B2B AI</div>
+      <h1 class="hero-h1">The signal<br/>beneath the <em>noise</em></h1>
+      <p class="hero-sub">Fynx AI detects hallucinations, misinformation, and fraudulent AI-generated feedback before it reaches your users, your ratings, or your regulator.</p>
+      <div class="hero-actions">
+        <a href="#cta" class="btn-primary"><span>Request Early Access</span></a>
+        <a href="#demo" class="btn-ghost">Try Live Demo</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="scan-line"></div>
+      <div class="signal-tag tag-fake">FAKE · 0.94</div>
+      <div class="signal-tag tag-real">AUTHENTIC · 0.91</div>
+      <div class="signal-tag tag-ai">AI-GENERATED · 0.87</div>
+      <div class="fox-wrap"><img src="./fynx_logo_high_res-removebg-preview.png" alt="Fynx AI"/></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
 
-            <button type="submit" id="submitBtn" class="btn btn-lg btn-dark btn-block">Subscribe</button>
-        </form>
+<!-- ═══ WHAT WE DO ═══ -->
+<section id="what">
+  <div class="section-wrap">
+    <div class="what-grid">
+      <div class="reveal">
+        <span class="section-label">What We Do</span>
+        <h2 class="section-h2">Reveal the true rating behind manipulated feedback</h2>
+        <p class="what-intro">Most rating systems are broken. They aggregate fake alongside real. Fynx AI separates the signal from the synthetic — at scale, in real time.</p>
+        <div>
+          <div class="cap-item">
+            <div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--fire)" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+            <div><div class="cap-title">Hallucination Detection</div><div class="cap-desc">Identify factual drift, unsupported claims, and AI confabulation at inference time.</div></div>
+          </div>
+          <div class="cap-item">
+            <div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg></div>
+            <div><div class="cap-title">Fake Review Scoring</div><div class="cap-desc">Score every review for authenticity, flag AI-generated content, surface fraud patterns.</div></div>
+          </div>
+          <div class="cap-item">
+            <div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--fire)" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
+            <div><div class="cap-title">EU Compliance</div><div class="cap-desc">Audit-ready outputs for Omnibus Directive — verified authentic consumer feedback.</div></div>
+          </div>
+          <div class="cap-item">
+            <div class="cap-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13,2 13,9 20,9"/></svg></div>
+            <div><div class="cap-title">Trust Signal Extraction</div><div class="cap-desc">Surface the truthful rating hidden within manipulated feedback datasets.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.2s">
+        <div class="score-card" id="scoreCard">
+          <div class="score-header"><span class="score-title">Review Analysis · Live</span><span class="score-badge">⚠ FLAGGED</span></div>
+          <div class="review-text">"Absolutely perfect experience. Staff were incredible, rooms immaculate. Would highly recommend to everyone without hesitation!"</div>
+          <div class="score-bars">
+            <div class="score-bar"><span class="score-bar-label">AI-Generated</span><div class="score-bar-track"><div class="score-bar-fill" data-width="88" style="background:var(--crimson)"></div></div><span class="score-val">0.88</span></div>
+            <div class="score-bar"><span class="score-bar-label">Sentiment Manip.</span><div class="score-bar-track"><div class="score-bar-fill" data-width="76" style="background:var(--fire)"></div></div><span class="score-val">0.76</span></div>
+            <div class="score-bar"><span class="score-bar-label">Vague Phrasing</span><div class="score-bar-track"><div class="score-bar-fill" data-width="82" style="background:var(--amber)"></div></div><span class="score-val">0.82</span></div>
+            <div class="score-bar"><span class="score-bar-label">Authenticity</span><div class="score-bar-track"><div class="score-bar-fill" data-width="12" style="background:rgba(245,166,35,.3)"></div></div><span class="score-val">0.12</span></div>
+          </div>
+        </div>
+        <div class="real-score-card">
+          <div><div class="real-label">Adjusted True Rating</div><div class="real-val">3.7 <span style="font-size:1.2rem;color:var(--muted)">/ 5.0</span></div><div class="real-delta">▼ 1.3 below displayed average</div></div>
+          <div style="text-align:right"><div class="real-label">Fraud Removed</div><div style="font-family:var(--syne);font-size:1.8rem;font-weight:800;color:var(--fire)">34%</div><div class="real-delta" style="color:var(--muted)">of review volume</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
 
-        <p id="feedback" class="hidden"></p>
+<!-- ═══ WHY NOW ═══ -->
+<section id="why">
+  <div class="why-bg"></div>
+  <div class="section-wrap">
+    <div class="why-layout">
+      <div class="reveal">
+        <span class="section-label">Why This Matters</span>
+        <h2 class="section-h2">Fake feedback is a business risk, not a moderation problem</h2>
+        <p style="color:var(--muted);line-height:1.75;margin-bottom:40px;font-size:.95rem">AI-generated and fraudulent reviews erode trust, skew decisions, and create regulatory exposure.</p>
+        <div class="why-points">
+          <div class="why-point reveal"><div class="why-num">01</div><div><div class="why-point-title">Regulatory pressure is accelerating</div><div class="why-point-desc">EU Omnibus Directive mandates verified authenticity. Fines up to 4% of annual revenue.</div></div></div>
+          <div class="why-point reveal" style="transition-delay:.1s"><div class="why-num">02</div><div><div class="why-point-title">AI makes fraud effortless</div><div class="why-point-desc">Thousands of plausible reviews cost nearly nothing to generate. Legacy moderation can't keep up.</div></div></div>
+          <div class="why-point reveal" style="transition-delay:.2s"><div class="why-num">03</div><div><div class="why-point-title">Trust compounds</div><div class="why-point-desc">Platforms with trusted ratings outperform on retention, conversion, and partner confidence.</div></div></div>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.15s">
+        <div class="why-stat-grid">
+          <div class="stat-block"><div class="stat-num" data-count="42" data-suffix="%">0%</div><div class="stat-label">of reviews show manipulation signs</div></div>
+          <div class="stat-block"><div class="stat-num" data-count="4" data-suffix="%">0%</div><div class="stat-label">of revenue — EU Omnibus fine</div></div>
+          <div class="stat-block"><div class="stat-num" data-count="93" data-suffix="%">0%</div><div class="stat-label">of travelers trust reviews for bookings</div></div>
+          <div class="stat-block"><div class="stat-num" data-count="137" data-suffix="%">0%</div><div class="stat-label">AI review growth since 2019</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ WHY US ═══ -->
+<section id="whyus">
+  <div class="section-wrap">
+    <div class="whyus-header reveal">
+      <span class="section-label">Why Us</span>
+      <h2 class="section-h2">Built from inside AI evaluation</h2>
+      <p style="color:var(--muted);line-height:1.75;font-size:.95rem">Our founders spent years inside the pipelines that trained and evaluated the models everyone now worries about.</p>
+    </div>
+    <div class="credential-grid reveal" style="transition-delay:.15s">
+      <div class="cred-block"><div class="cred-tag">Domain Expertise</div><div class="cred-title">RLHF & Hallucination Detection</div><div class="cred-desc">Direct experience using RLHF to identify hallucinations in STEM model outputs — the exact threat we detect for clients.</div></div>
+      <div class="cred-block"><div class="cred-tag">Evaluation Infrastructure</div><div class="cred-title">Truthfulness at Scale</div><div class="cred-desc">Rating model outputs, designing adversarial prompts, building scoring criteria at Outlier.</div></div>
+      <div class="cred-block"><div class="cred-tag">Technical Depth</div><div class="cred-title">Full-Stack AI Engineering</div><div class="cred-desc">From 42 Heilbronn's rigorous curriculum to production deployment — we ship software that works.</div></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ ARCHITECTURE — GOOGLE CLOUD ═══ -->
+<section id="architecture">
+  <div class="arch-bg"></div>
+  <div class="section-wrap">
+    <div class="reveal">
+      <span class="section-label">Technical Architecture</span>
+      <h2 class="section-h2">Built on <span style="color:var(--amber)">Google Cloud</span></h2>
+      <p style="color:var(--muted);line-height:1.75;margin-bottom:48px;font-size:.95rem;max-width:640px">Cloud-native on GCP — Vertex AI for training, BigQuery for analytics, Cloud Run for auto-scaling API. EU region (europe-west3) for GDPR compliance.</p>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const form = document.getElementById("subscribeForm");
-            const feedback = document.getElementById("feedback");
+    <div class="gcp-grid reveal" style="transition-delay:.1s">
+      <div class="gcp-card"><div class="gcp-icon">🧠</div><div class="gcp-tag">Model Training & Inference</div><div class="gcp-title">Vertex AI + Cloud GPUs</div><div class="gcp-desc">Fine-tuning detection models on A100/T4 GPUs. Sub-200ms inference via Vertex AI Endpoints.</div><div class="gcp-pct">45%</div></div>
+      <div class="gcp-card"><div class="gcp-icon">📊</div><div class="gcp-tag">Data Pipeline</div><div class="gcp-title">BigQuery + Pub/Sub</div><div class="gcp-desc">Real-time streaming ingestion and pattern detection across millions of reviews.</div><div class="gcp-pct">25%</div></div>
+      <div class="gcp-card"><div class="gcp-icon">⚡</div><div class="gcp-tag">API Infrastructure</div><div class="gcp-title">Cloud Run + Firestore</div><div class="gcp-desc">Zero-to-scale API serving. Real-time trust scores. Auto-scaling with demand.</div><div class="gcp-pct">30%</div></div>
+    </div>
 
-            // Check if the user has already subscribed
-            if (localStorage.getItem("fynx_subscribed") === "true") {
-                form.style.display = "none"; // Hide form
-                feedback.classList.remove("hidden");
-                feedback.innerText = "You've already subscribed. Thank you!";
-                feedback.style.color = "green";
-                return; // Prevent further code from running
-            }
+    <!-- ═══ ANIMATED FLOW DIAGRAM ═══ -->
+    <div class="flow-wrap reveal" style="transition-delay:.2s" id="flowDiagram">
+      <div class="flow-scan"></div>
+      <div class="flow-label">◈ Real-Time Review Processing Pipeline</div>
 
-            form.addEventListener("submit", function (event) {
-                // Prevent submission if already submitted
-                if (localStorage.getItem("fynx_subscribed") === "true") {
-                    event.preventDefault();
-                    return;
-                }
+      <div class="flow-col">
+        <!-- Node 1: Review Input -->
+        <div class="f-node" data-delay="0">
+          <div class="f-node-title">📥 Review Submitted</div>
+          <div class="f-node-sub">OTA Platform / API Webhook / REST Endpoint</div>
+        </div>
+        <div class="f-arrow"><div class="f-arrow-v"></div></div>
 
-                // Set localStorage flag AFTER successful submission
-                localStorage.setItem("fynx_subscribed", "true");
-            });
-        });
-    </script>
-    
-    <script type="text/javascript">
-    _linkedin_partner_id = "6968194";
-    window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
-    window._linkedin_data_partner_ids.push(_linkedin_partner_id);
-    </script><script type="text/javascript">
-    (function(l) {
-    if (!l){window.lintrk = function(a,b){window.lintrk.q.push([a,b])};
-    window.lintrk.q=[]}
-    var s = document.getElementsByTagName("script")[0];
-    var b = document.createElement("script");
-    b.type = "text/javascript";b.async = true;
-    b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
-    s.parentNode.insertBefore(b, s);})(window.lintrk);
-    </script>
-    <noscript>
-    <img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=6968194&fmt=gif" />
-    </noscript>
-    
+        <!-- Node 2: Pub/Sub -->
+        <div class="f-node gcp" data-delay="200">
+          <div class="f-node-title">📡 Cloud Pub/Sub</div>
+          <div class="f-node-sub">Real-time message queue & event ingestion</div>
+          <div class="f-node-gcp">GOOGLE CLOUD</div>
+        </div>
+        <div class="f-arrow"><div class="f-arrow-v"></div></div>
+
+        <!-- Node 3: Dataflow -->
+        <div class="f-node gcp" data-delay="400">
+          <div class="f-node-title">⚙️ Cloud Dataflow</div>
+          <div class="f-node-sub">Stream processing · Feature extraction · Text normalization</div>
+          <div class="f-node-gcp">GOOGLE CLOUD</div>
+        </div>
+        <div class="f-arrow"><div class="f-arrow-v"></div></div>
+
+        <!-- Split: Vertex AI + BigQuery -->
+        <div class="f-split">
+          <div class="f-node vertex" data-delay="600">
+            <div class="f-node-title">🧠 Vertex AI Models</div>
+            <div class="f-node-sub">Hallucination detection · Fake review classifier · Coordination analysis</div>
+            <div class="f-node-gcp">VERTEX AI · A100 GPUs</div>
+          </div>
+          <div class="f-split-line"><div class="f-split-h"></div></div>
+          <div class="f-node gcp" data-delay="700">
+            <div class="f-node-title">📊 BigQuery</div>
+            <div class="f-node-sub">Analytics warehouse · Cross-platform pattern matching · Historical analysis</div>
+            <div class="f-node-gcp">GOOGLE CLOUD</div>
+          </div>
+        </div>
+        <div class="f-arrow"><div class="f-arrow-v"></div></div>
+
+        <!-- Cloud Run API -->
+        <div class="f-node vertex" data-delay="900">
+          <div class="f-node-title">⚡ Cloud Run API</div>
+          <div class="f-node-sub">Trust scores · Verdicts · Compliance reports · &lt;200ms latency</div>
+          <div class="f-node-gcp">GOOGLE CLOUD · AUTO-SCALING</div>
+        </div>
+        <div class="f-arrow"><div class="f-arrow-v"></div></div>
+
+        <!-- Split: Output -->
+        <div class="f-split">
+          <div class="f-node blocked" data-delay="1100">
+            <div style="font-size:1.4rem;margin-bottom:4px">🚫</div>
+            <div class="f-node-title" style="color:var(--crimson)">Fake → Blocked</div>
+            <div class="f-node-sub">Fraud score &gt; 0.7 · Auto-quarantined</div>
+          </div>
+          <div class="f-split-line"><div style="text-align:center"><div class="f-or">OR</div></div></div>
+          <div class="f-node passed" data-delay="1200">
+            <div style="font-size:1.4rem;margin-bottom:4px">✅</div>
+            <div class="f-node-title" style="color:var(--green)">Real → Published</div>
+            <div class="f-node-sub">Compliance trail included · EU audit-ready</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credit Allocation -->
+    <div class="credit-section reveal" style="transition-delay:.3s">
+      <div style="font-family:var(--syne);font-size:1.1rem;font-weight:700;margin-bottom:20px;text-align:center">Projected GCP Credit Allocation</div>
+      <div id="creditBars">
+        <div class="credit-bar-wrap"><span class="credit-bar-label">Vertex AI / GPU Training</span><div class="credit-bar-outer"><div class="credit-bar-inner" data-width="45" style="background:linear-gradient(90deg,var(--fire),var(--amber))"></div></div><span class="credit-bar-pct">45%</span></div>
+        <div class="credit-bar-wrap"><span class="credit-bar-label">BigQuery & Dataflow</span><div class="credit-bar-outer"><div class="credit-bar-inner" data-width="25" style="background:linear-gradient(90deg,var(--amber),var(--gold))"></div></div><span class="credit-bar-pct">25%</span></div>
+        <div class="credit-bar-wrap"><span class="credit-bar-label">Cloud Run & GKE</span><div class="credit-bar-outer"><div class="credit-bar-inner" data-width="20" style="background:linear-gradient(90deg,var(--crimson),var(--fire))"></div></div><span class="credit-bar-pct">20%</span></div>
+        <div class="credit-bar-wrap"><span class="credit-bar-label">Storage & Monitoring</span><div class="credit-bar-outer"><div class="credit-bar-inner" data-width="10" style="background:linear-gradient(90deg,var(--deep),var(--crimson))"></div></div><span class="credit-bar-pct">10%</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ LIVE DEMO ═══ -->
+<section id="demo">
+  <div class="section-wrap">
+    <div class="reveal" style="text-align:center;margin-bottom:48px">
+      <span class="section-label" style="display:block;text-align:center">Live Demo</span>
+      <h2 class="section-h2">See Fynx AI in action</h2>
+      <p style="color:var(--muted);line-height:1.75;font-size:.95rem;max-width:500px;margin:0 auto">Paste any review and watch our model score it in real time.</p>
+    </div>
+    <div class="demo-box reveal" style="transition-delay:.15s">
+      <div style="font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.08em;margin-bottom:16px">REVIEW INPUT</div>
+      <textarea class="demo-textarea" id="demoInput" placeholder="Paste a review here... e.g. 'Amazing hotel! Best experience ever! Perfect in every way! Would recommend to everyone without hesitation!'">"Amazing hotel! Best experience ever!! The staff were absolutely incredible and the rooms were immaculate. Perfect perfect perfect. Would recommend to everyone without any hesitation whatsoever!!!"</textarea>
+      <button class="btn-primary" onclick="runDemo()" id="demoBtn"><span>⚡ Analyze Review</span></button>
+
+      <!-- Loading -->
+      <div id="demoLoading">
+        <div style="font-family:var(--mono);font-size:.75rem;color:var(--amber);letter-spacing:.06em">PROCESSING REVIEW THROUGH FYNX AI PIPELINE...</div>
+        <div class="loading-bar"><div class="loading-bar-inner" id="loadBarInner"></div></div>
+      </div>
+
+      <!-- Results -->
+      <div id="demoResults">
+        <div class="demo-scores">
+          <div class="demo-score-item">
+            <div class="demo-score-label">AI-GENERATED</div>
+            <div class="demo-score-val" id="resAI" style="color:var(--crimson)">—</div>
+          </div>
+          <div class="demo-score-item">
+            <div class="demo-score-label">AUTHENTICITY</div>
+            <div class="demo-score-val" id="resAuth" style="color:var(--amber)">—</div>
+          </div>
+          <div class="demo-score-item">
+            <div class="demo-score-label">VERDICT</div>
+            <div class="demo-score-val" id="resVerdict">—</div>
+          </div>
+        </div>
+        <div class="demo-explanation" id="resExplanation"></div>
+        <div style="margin-top:20px;padding:16px;background:var(--surface);border:1px solid var(--border);font-family:var(--mono);font-size:.7rem;color:var(--muted);line-height:1.8;overflow-x:auto">
+          <div style="color:var(--amber);margin-bottom:8px">// API Response</div>
+          <pre id="resJSON" style="margin:0;white-space:pre-wrap;font-family:var(--mono)"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ TRACTION ═══ -->
+<section id="traction">
+  <div class="section-wrap">
+    <div class="reveal">
+      <span class="section-label">Traction</span>
+      <h2 class="section-h2">Early signals</h2>
+    </div>
+    <div class="traction-grid reveal" style="transition-delay:.1s">
+      <div class="traction-block"><div class="traction-val">Campus Founders</div><div class="traction-desc">Accepted into startup program — Heilbronn, Germany</div></div>
+      <div class="traction-block"><div class="traction-val">3 OTAs</div><div class="traction-desc">In active pilot discussions</div></div>
+      <div class="traction-block"><div class="traction-val">89%</div><div class="traction-desc">Detection accuracy on synthetic review classification</div></div>
+      <div class="traction-block"><div class="traction-val">Q3 2025</div><div class="traction-desc">First paid pilot targeted</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px" class="reveal" style="transition-delay:.2s">
+      <div>
+        <div style="font-family:var(--syne);font-size:1rem;font-weight:700;margin-bottom:16px">✓ Completed</div>
+        <div class="milestone"><div class="m-dot done"></div><div class="m-text"><strong>Campus Founders acceptance</strong> — Heilbronn startup program</div></div>
+        <div class="milestone"><div class="m-dot done"></div><div class="m-text"><strong>42 Heilbronn graduation</strong> + AI specialization track</div></div>
+        <div class="milestone"><div class="m-dot done"></div><div class="m-text"><strong>2+ years AI evaluation</strong> at Outlier — RLHF, hallucination detection</div></div>
+        <div class="milestone"><div class="m-dot done"></div><div class="m-text"><strong>Competitive analysis</strong> — no direct competitor in EU travel review space</div></div>
+        <div class="milestone"><div class="m-dot done"></div><div class="m-text"><strong>Initial detection model trained</strong> — 89% accuracy on synthetic reviews</div></div>
+      </div>
+      <div>
+        <div style="font-family:var(--syne);font-size:1rem;font-weight:700;margin-bottom:16px">→ In Progress & Next</div>
+        <div class="milestone"><div class="m-dot active"></div><div class="m-text"><strong>MVP API development</strong> — Cloud Run deployment</div></div>
+        <div class="milestone"><div class="m-dot active"></div><div class="m-text"><strong>3 OTA outreach conversations</strong> initiated</div></div>
+        <div class="milestone"><div class="m-dot active"></div><div class="m-text"><strong>Google for Startups</strong> Cloud Program application</div></div>
+        <div class="milestone"><div class="m-dot next"></div><div class="m-text"><strong>First pilot</strong> with OTA partner — target Q3 2025</div></div>
+        <div class="milestone"><div class="m-dot next"></div><div class="m-text"><strong>Process 100K reviews</strong> in pilot · &lt;200ms latency</div></div>
+      </div>
+    </div>
+
+    <div class="supported-row reveal">
+      <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Supported by</div>
+      <div class="supported-item">42 Heilbronn</div>
+      <div class="supported-item">Campus Founders</div>
+      <div class="supported-item">Outlier</div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ FOUNDERS ═══ -->
+<section id="founders">
+  <div class="section-wrap">
+    <div class="reveal">
+      <span class="section-label">The Team</span>
+      <h2 class="section-h2">Two engineers who trained the models.<br/>Now they audit them.</h2>
+    </div>
+    <div class="founders-grid">
+      <div class="founder-card reveal" style="transition-delay:.1s">
+        <div class="founder-name">Djallal-Eddine Mekki</div>
+        <div class="founder-role">Co-Founder · AI Evaluation & Vision</div>
+        <div class="founder-bio">Engineer, developer, and AI trainer. Politecnico di Torino and 42 Heilbronn graduate. Extensive AI evaluation experience at Outlier applying RLHF to detect hallucinations in STEM outputs. AIStart and CCC participant. Leads Fynx's evaluation methodology and product vision.</div>
+        <div class="founder-tags">
+          <span class="f-tag accent">42 Heilbronn</span>
+          <span class="f-tag accent">Politecnico di Torino</span>
+          <span class="f-tag">RLHF · Outlier</span>
+          <span class="f-tag">Hallucination Detection</span>
+          <span class="f-tag">Campus Founders</span>
+        </div>
+      </div>
+      <div class="founder-card reveal" style="transition-delay:.2s">
+        <div class="founder-name">Abdelilah Noury</div>
+        <div class="founder-role">Co-Founder · Engineering & Architecture</div>
+        <div class="founder-bio">Experienced full-stack developer and 42 Heilbronn specialization student. Former AI trainer at Outlier with hands-on experience at Khyari Organization and Assala-Isskane. Designs the systems that score, classify, and surface authentic signals at production scale.</div>
+        <div class="founder-tags">
+          <span class="f-tag accent">42 Heilbronn</span>
+          <span class="f-tag">Full-Stack</span>
+          <span class="f-tag">AI Trainer · Outlier</span>
+          <span class="f-tag">System Architecture</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ ORIGIN ═══ -->
+<section id="origin">
+  <div class="origin-bg"></div>
+  <div class="section-wrap">
+    <div class="origin-inner reveal">
+      <span class="section-label" style="display:block;text-align:center">Our Origin</span>
+      <div class="origin-quote">"We didn't pivot into AI trust.<br/>We came from <strong>inside</strong> it."</div>
+      <p class="origin-body">Djallal and Abdel met at 42 Heilbronn — a peer-driven engineering school where you build everything from scratch. Their work brought together everything they'd learned evaluating AI outputs: identifying when models hallucinate, when feedback is fabricated, and when a score cannot be trusted. Campus Founders gave them the structure to turn that insight into a company.</p>
+      <div class="origin-tags">
+        <span class="origin-tag">42 Heilbronn</span>
+        <span class="origin-tag">Campus Founders</span>
+        <span class="origin-tag">Outlier</span>
+        <span class="origin-tag">Founded 2025</span>
+        <span class="origin-tag">Heilbronn · Germany</span>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ VISION ═══ -->
+<section id="vision">
+  <div class="vision-bg"></div>
+  <div class="section-wrap">
+    <div class="vision-inner reveal">
+      <span class="section-label" style="display:block;text-align:center">The Vision</span>
+      <h2 class="vision-h2">The trust layer<br/>for <span style="color:var(--amber)">online travel</span></h2>
+      <p class="vision-sub">Every booking, every rating, every recommendation is only as valuable as the authenticity behind it. We're building the infrastructure that guarantees that authenticity.</p>
+      <div class="vision-pillars">
+        <div class="pillar"><div class="pillar-icon">◈</div><div class="pillar-title">Authentic Signal Layer</div><div class="pillar-desc">Persistent trust score per review, per property, per platform — updated continuously.</div></div>
+        <div class="pillar"><div class="pillar-icon">◇</div><div class="pillar-title">Compliance by Default</div><div class="pillar-desc">Audit trails, detection logs, and verified authenticity reports for Omnibus Directive.</div></div>
+        <div class="pillar"><div class="pillar-icon">△</div><div class="pillar-title">The Real Rating</div><div class="pillar-desc">The score your property actually deserves — stripped of manipulation and synthetic inflation.</div></div>
+      </div>
+      <p style="font-family:var(--syne);font-size:1.25rem;font-weight:700;color:var(--muted)">"<span style="color:var(--text)">Fynx AI is building the trust layer for OTA.</span>"</p>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ CTA ═══ -->
+<section id="cta">
+  <div class="cta-bg-fox"></div>
+  <div class="section-wrap">
+    <div class="cta-inner reveal">
+      <span class="section-label" style="display:block;text-align:center">Get Early Access</span>
+      <h2 class="cta-h2">Ready to know<br/>what's real?</h2>
+      <p class="cta-sub">Join OTAs, marketplaces, and compliance teams working with us to surface authentic signals and eliminate fraudulent feedback.</p>
+      <div class="cta-form">
+        <input type="email" class="email-input" placeholder="your@company.com"/>
+        <button class="btn-primary" onclick="handleCTA()"><span>Request Pilot Access</span></button>
+      </div>
+      <div class="cta-note">For demo requests or partnership inquiries → hello@fynx.ai</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo"><img src="./fynx_logo_high_res-removebg-preview.png" alt="Fynx"/>Fynx AI</div>
+    <div class="footer-links">
+      <a href="#what">Product</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#founders">Team</a>
+      <a href="#vision">Vision</a>
+      <a href="mailto:hello@fynx.ai">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 Fynx AI · Heilbronn, Germany</div>
+  </div>
+</footer>
+
+<!-- ═══ ALL JAVASCRIPT ═══ -->
+<script>
+// ─── NAV SCROLL ───
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40);
+});
+
+// ─── HERO ANIMATION ───
+function animateHero(){
+  const h1=document.querySelector('.hero-h1');
+  const sub=document.querySelector('.hero-sub');
+  const actions=document.querySelector('.hero-actions');
+  const visual=document.querySelector('.hero-visual');
+  if(h1){h1.style.transition='opacity .9s ease,transform .9s ease';h1.style.opacity='1';h1.style.transform='none'}
+  setTimeout(()=>{if(sub){sub.style.transition='opacity .7s ease,transform .7s ease';sub.style.opacity='1';sub.style.transform='none'}},300);
+  setTimeout(()=>{if(actions){actions.style.transition='opacity .6s ease,transform .6s ease';actions.style.opacity='1';actions.style.transform='none'}},500);
+  setTimeout(()=>{if(visual){visual.style.transition='opacity 1s ease';visual.style.opacity='1'}},400);
+}
+setTimeout(animateHero,200);
+
+// ─── REVEAL ON SCROLL ───
+const revealObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revealObs.unobserve(e.target)}});
+},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+
+// ─── SCORE BARS ───
+const barObs=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.querySelectorAll('.score-bar-fill').forEach((bar,i)=>{
+        setTimeout(()=>{bar.style.width=bar.dataset.width+'%'},i*150);
+      });
+      barObs.unobserve(entry.target);
+    }
+  });
+},{threshold:.3});
+document.querySelectorAll('.score-card').forEach(c=>barObs.observe(c));
+
+// ─── CREDIT BARS ───
+const creditObs=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.querySelectorAll('.credit-bar-inner').forEach((bar,i)=>{
+        setTimeout(()=>{bar.style.width=bar.dataset.width+'%'},i*200);
+      });
+      creditObs.unobserve(entry.target);
+    }
+  });
+},{threshold:.3});
+const creditEl=document.getElementById('creditBars');
+if(creditEl) creditObs.observe(creditEl);
+
+// ─── STAT COUNTERS ───
+const countObs=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const el=entry.target;
+      const target=parseInt(el.dataset.count)||0;
+      const suffix=el.dataset.suffix||'';
+      let current=0;
+      const step=Math.max(1,Math.floor(target/60));
+      const interval=setInterval(()=>{
+        current=Math.min(current+step,target);
+        el.textContent=current+suffix;
+        if(current>=target)clearInterval(interval);
+      },25);
+      countObs.unobserve(el);
+    }
+  });
+},{threshold:.5});
+document.querySelectorAll('.stat-num[data-count]').forEach(el=>countObs.observe(el));
+
+// ─── FLOW DIAGRAM NODE ANIMATION ───
+const flowObs=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const nodes=entry.target.querySelectorAll('.f-node');
+      nodes.forEach((node,i)=>{
+        const delay=parseInt(node.dataset.delay)||i*200;
+        setTimeout(()=>{
+          node.style.transition='opacity .6s ease,transform .6s ease';
+          node.style.opacity='1';
+          node.style.transform='none';
+          node.classList.add('visible');
+        },delay);
+      });
+      flowObs.unobserve(entry.target);
+    }
+  });
+},{threshold:.15});
+const flowEl=document.getElementById('flowDiagram');
+if(flowEl) flowObs.observe(flowEl);
+
+// ─── RING ORBIT NODES ───
+document.querySelectorAll('.ring').forEach((ring,i)=>{
+  const node=document.createElement('div');
+  const colors=['var(--amber)','var(--fire)','var(--crimson)'];
+  const sizes=[140,180,220];
+  node.style.cssText=`position:absolute;top:0;left:50%;width:8px;height:8px;margin-left:-4px;margin-top:-4px;background:${colors[i]};clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);transform-origin:center ${sizes[i]+4}px;`;
+  ring.appendChild(node);
+});
+
+// ─── DEMO FUNCTIONALITY ───
+function runDemo(){
+  const input=document.getElementById('demoInput').value.trim();
+  if(!input){alert('Please paste a review to analyze.');return;}
+ 
+  const btn=document.getElementById('demoBtn');
+  const loading=document.getElementById('demoLoading');
+  const results=document.getElementById('demoResults');
+  const loadBar=document.getElementById('loadBarInner');
+ 
+  btn.disabled=true;
+  btn.style.opacity='.5';
+  results.classList.remove('active');
+  results.style.display='none';
+  loading.classList.add('active');
+  loadBar.style.animation='none';
+  loadBar.offsetHeight;
+  loadBar.style.animation='loadProgress 2s ease-in-out forwards';
+
+  setTimeout(()=>{
+    // Simulated scoring
+    const words=input.split(/\s+/).length;
+    const exclCount=(input.match(/!/g)||[]).length;
+    const capsRatio=(input.match(/[A-Z]/g)||[]).length/Math.max(input.length,1);
+    const superlatives=/(perfect|amazing|incredible|best|fantastic|wonderful|immaculate|absolutely|flawless|outstanding)/gi;
+    const supCount=(input.match(superlatives)||[]).length;
+    const vagueWords=/(great|nice|good|would recommend|without hesitation)/gi;
+    const vagueCount=(input.match(vagueWords)||[]).length;
+
+    // Generate scores
+    let aiScore=Math.min(0.98,Math.max(0.15,
+      0.3+(exclCount*0.04)+(supCount*0.08)+(vagueCount*0.06)+(capsRatio*0.5)-((words>50?0.1:0)+(words>100?0.1:0))
+    ));
+    let authScore=Math.max(0.05,Math.min(0.95,1-aiScore+((Math.random()*0.1)-0.05)));
+   
+    aiScore=Math.round(aiScore*100)/100;
+    authScore=Math.round(authScore*100)/100;
+   
+    const isFake=aiScore>0.6;
+    const verdict=isFake?'BLOCKED':'PASSED';
+    const verdictColor=isFake?'var(--crimson)':'var(--green)';
+   
+    // Reasoning
+    const reasons=[];
+    if(supCount>=2)reasons.push('High density of superlative language ('+supCount+' instances)');
+    if(exclCount>=2)reasons.push('Excessive exclamation marks ('+exclCount+' found)');
+    if(vagueCount>=1)reasons.push('Vague positive phrasing without specific details');
+    if(words<30)reasons.push('Unusually short review — low information density');
+    if(capsRatio>0.15)reasons.push('Elevated capitalization ratio suggesting emphasis manipulation');
+    if(supCount<1&&exclCount<2&&vagueCount<1)reasons.push('Review appears to contain specific, grounded feedback');
+    if(reasons.length===0)reasons.push('Review shows balanced sentiment with specific details');
+
+    loading.classList.remove('active');
+   
+    document.getElementById('resAI').textContent=aiScore.toFixed(2);
+    document.getElementById('resAI').style.color=aiScore>0.6?'var(--crimson)':'var(--green)';
+    document.getElementById('resAuth').textContent=authScore.toFixed(2);
+    document.getElementById('resAuth').style.color=authScore>0.5?'var(--green)':'var(--crimson)';
+    document.getElementById('resVerdict').textContent=verdict;
+    document.getElementById('resVerdict').style.color=verdictColor;
+    document.getElementById('resExplanation').innerHTML='<strong style="color:var(--text)">Analysis:</strong> '+reasons.join(' · ');
+   
+    document.getElementById('resJSON').textContent=JSON.stringify({
+      review_id:"demo_"+Date.now(),
+      fraud_score:aiScore,
+      authenticity:authScore,
+      ai_generated_probability:aiScore,
+      verdict:verdict.toLowerCase(),
+      fraud_type:isFake?(aiScore>0.8?"ai_generated":"suspicious"):"none",
+      coordination_detected:false,
+      signals:reasons,
+      latency_ms:Math.floor(Math.random()*80+120),
+      model_version:"fynx-v0.3-beta",
+      compliance_trail:true
+    },null,2);
+
+    results.classList.add('active');
+    results.style.display='block';
+   
+    btn.disabled=false;
+    btn.style.opacity='1';
+  },2200);
+}
+
+// ─── CTA HANDLER ───
+function handleCTA(){
+  const email=document.querySelector('.email-input').value.trim();
+  if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
+  alert('Thank you! We\'ll be in touch at '+email+' shortly.');
+  document.querySelector('.email-input').value='';
+}
+
+// ─── SMOOTH SCROLL ───
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const target=document.querySelector(a.getAttribute('href'));
+    if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'start'})}
+  });
+});
+
+// ─── PARALLAX ON HERO ───
+window.addEventListener('scroll',()=>{
+  const v=document.querySelector('.hero-visual');
+  if(v&&window.scrollY<800)v.style.transform='translateY('+window.scrollY*0.05+'px)';
+});
+</script>
 </body>
 </html>
